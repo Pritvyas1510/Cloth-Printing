@@ -92,7 +92,7 @@ const ProductDetails = () => {
         ) : (
           <>
             {/* Image Section */}
-            <div className="flex flex-col gap-6 sticky top-24 self-start">
+            <div className="flex flex-col gap-6 md:sticky md:top-24 md:self-start">
               <div className="w-full h-[400px] flex items-center justify-center bg-white rounded-xl overflow-hidden">
                 <img
                   src={product.images[currentImageIndex] ? `${BASE_URL}/${product.images[currentImageIndex]}` : 'https://via.placeholder.com/600'}
