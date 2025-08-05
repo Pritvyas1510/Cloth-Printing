@@ -1,6 +1,7 @@
 import React from 'react';
 
 const DesignSteps = ({ selectedProduct }) => {
+    const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000"; 
   const colorStyles = {
     Red: 'bg-red-500', Blue: 'bg-blue-500', Green: 'bg-green-500', Black: 'bg-black',
     White: 'bg-white border border-[#cedbe8]', Yellow: 'bg-yellow-500', Orange: 'bg-orange-500',

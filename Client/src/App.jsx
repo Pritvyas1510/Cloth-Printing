@@ -17,6 +17,7 @@ import ViewProduct from "./Admin/Product/ViewProduct";
 import EditProduct from "./Admin/Product/EditProduct";
 import AllProduct from "./Admin/Product/AllProduct";
 import ProductDetails from "./pages/Design/Product/ProductDetails";
+import Profile from "./components/Profile";
 
 function App() {
   return (
@@ -54,6 +55,8 @@ function App() {
             <Route path="/login" element={<Login/>}/>
             <Route path="/register" element={<Register/>}/>
 
+          {/* Profile Routes */}
+            <Route path="/profile" element={<Profile/>}/>
 
           {/* Not Found */}
 

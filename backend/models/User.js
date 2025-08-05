@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     },
     mobile: {
       type: String,
-      required: [true, "Mobile number is required"],
+      required: false,
     },
     email: {
       type: String,
@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
     },
     address: {
       type: String,
-      required: [true, "Address is required"],
+      required: false,
     },
     password: {
       type: String,
@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["user", "admin"],
-      default:"user"
+      default: "user"
     },
   },
   {

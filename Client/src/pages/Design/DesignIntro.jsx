@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 
 const DesignIntro = ({ products, loading, onSelectProduct }) => {
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
@@ -95,11 +95,23 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
     setTempColors([]);
   };
 
+  // Calculate discount dynamically
+  const calculateDiscount = (price) => {
+    const originalPrice = price / 0.8; // Assuming 20% discount as baseline (adjust if backend provides discount)
+    const discount = ((originalPrice - price) / originalPrice) * 100;
+    return discount > 0 ? Math.round(discount) : 0;
+  };
+
+  const getOriginalPrice = (price, discount) => {
+    if (discount > 0) {
+      return (price / (1 - discount / 100)).toFixed(2);
+    }
+    return (price * 1.2).toFixed(2); // Default 20% higher if no discount
+  };
+
   return (
     <section className="bg-blue-100 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-       
-
         {/* Search Bar */}
         <div className="bg-white rounded-2xl shadow-xl p-4 mb-6">
           <div className="relative flex flex-col sm:flex-row gap-4">
@@ -145,54 +157,62 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <Link
-                key={product._id}
-                to={`/productdetails/${product._id}`}
-                className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 block"
-                onClick={() => onSelectProduct(product)}
-              >
-                <img
-                  src={product.images[0] ? `${BASE_URL}/${product.images[0]}` : "https://via.placeholder.com/300"}
-                  alt={product.title}
-                  className="w-full h-48 object-contain rounded-lg mb-4"
-                  onError={(e) => (e.target.src = "https://via.placeholder.com/300")}
-                />
-                <h3 className="text-xl font-semibold text-[#0d141c] mb-2 truncate">{product.title}</h3>
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="text-lg text-green-600 font-semibold">₹{product.price.toFixed(2)}</p>
-                  <span className="text-sm text-[#49739c] line-through">₹{(product.price * 1.2).toFixed(2)}</span>
-                  <span className="text-sm text-red-600 font-semibold">20% OFF</span>
-                </div>
-                <div className="mb-3">
-                  <p className="text-[#0d141c] text-sm font-medium mb-1">Sizes:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.size.map((size) => (
-                      <span
-                        key={size}
-                        className="px-2 py-1 bg-slate-50 border border-[#cedbe8] rounded-full text-[#49739c] text-xs font-medium"
-                      >
-                        {size}
-                      </span>
-                    ))}
+            {filteredProducts.map((product) => {
+              const discount = calculateDiscount(product.price);
+              const originalPrice = getOriginalPrice(product.price, discount);
+              return (
+                <Link
+                  key={product._id}
+                  to={`/productdetails/${product._id}`}
+                  className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 block"
+                 
+                >
+                  <img
+                    src={product.images[0] ? `${BASE_URL}/${product.images[0]}` : "https://via.placeholder.com/300"}
+                    alt={product.title}
+                    className="w-full h-48 object-contain rounded-lg mb-4"
+                    onError={(e) => (e.target.src = "https://via.placeholder.com/300")}
+                  />
+                  <h3 className="text-xl font-semibold text-[#0d141c] mb-2 truncate">{product.title}</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="text-lg text-green-600 font-semibold">₹{product.price.toFixed(2)}</p>
+                    {discount > 0 && (
+                      <>
+                        <span className="text-sm text-[#49739c] line-through">₹{originalPrice}</span>
+                        <span className="text-sm text-red-600 font-semibold">{product.discount}% OFF</span>
+                      </>
+                    )}
                   </div>
-                </div>
-                <div className="mb-4">
-                  <p className="text-[#0d141c] text-sm font-medium mb-1">Colors:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.color.map((color) => (
-                      <span
-                        key={color}
-                        className={`w-6 h-6 rounded-full ${colorStyles[color]} border-2 ${
-                          color === "White" ? "border-[#cedbe8]" : "border-[#0d141c]"
-                        } hover:scale-105 transition duration-200`}
-                        title={color}
-                      ></span>
-                    ))}
+                  <div className="mb-3">
+                    <p className="text-[#0d141c] text-sm font-medium mb-1">Sizes:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {product.size.map((size) => (
+                        <span
+                          key={size}
+                          className="px-2 py-1 bg-slate-50 border border-[#cedbe8] rounded-full text-[#49739c] text-xs font-medium"
+                        >
+                          {size}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="mb-4">
+                    <p className="text-[#0d141c] text-sm font-medium mb-1">Colors:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {product.color.map((color) => (
+                        <span
+                          key={color}
+                          className={`w-6 h-6 rounded-full ${colorStyles[color]} border-2 ${
+                            color === "White" ? "border-[#cedbe8]" : "border-[#0d141c]"
+                          } hover:scale-105 transition duration-200`}
+                          title={color}
+                        ></span>
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
 

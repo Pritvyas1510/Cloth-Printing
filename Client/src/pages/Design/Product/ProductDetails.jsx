@@ -16,7 +16,7 @@ const ProductDetails = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
   const navigate = useNavigate();
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || 'http://localhost:5000';
+  const BASE_URL = import.meta.env.BACKEND_URI || 'http://localhost:5000';
 
   const colorStyles = {
     Red: 'bg-red-500', Blue: 'bg-blue-500', Green: 'bg-green-500', Black: 'bg-black',
@@ -76,6 +76,16 @@ const ProductDetails = () => {
     }
   };
 
+  const handleAddToCart = () => {
+    if (!selectedSize || !selectedColor) {
+      toast.error('Please select a size and color', { position: 'top-left' });
+      return;
+    }
+    // Simulate adding to cart (replace with actual cart logic)
+    toast.success(`Added ${quantity} x ${product.title} to cart`, { position: 'top-left' });
+    navigate('/cart');
+  };
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-white py-10 px-4">
       <div className="max-w-6xl w-full bg-gray-50 rounded-2xl p-10 shadow-xl grid grid-cols-1 lg:grid-cols-2 gap-10 font-sans text-[#0d141c]">
@@ -89,6 +99,8 @@ const ProductDetails = () => {
           <div className="flex justify-center items-center h-64 col-span-2">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0d141c]"></div>
           </div>
+        ) : !product ? (
+          <div className="col-span-2 text-center text-red-600">Product not found</div>
         ) : (
           <>
             {/* Image Section */}
@@ -139,20 +151,69 @@ const ProductDetails = () => {
 
             {/* Details Section */}
             <div className="flex flex-col justify-between space-y-8">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <h1 className="text-4xl font-bold">{product.title}</h1>
                 <div className="flex items-center space-x-4">
                   <p className="text-3xl text-green-600 font-semibold">₹{product.price.toFixed(2)}</p>
                   <p className="text-xl text-gray-500 line-through">₹{(product.price * 1.2).toFixed(2)}</p>
                   <p className="text-xl text-red-600 font-semibold">20% OFF</p>
                 </div>
+
                 <div className="bg-white p-6 rounded-xl shadow-sm">
                   <h3 className="text-xl font-semibold mb-2">Description</h3>
                   <p className="text-gray-700">{product.description || 'No description available'}</p>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 className="text-xl font-semibold mb-2">Category</h3>
+                    <p className="text-gray-700">{product.category || 'Not specified'}</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 className="text-xl font-semibold mb-2">Material</h3>
+                    <p className="text-gray-700">{product.material || 'Not specified'}</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 className="text-xl font-semibold mb-2">Stock Quantity</h3>
+                    <p className="text-gray-700">{product.stockQuantity || 0}</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 className="text-xl font-semibold mb-2">Brand</h3>
+                    <p className="text-gray-700">{product.brand || 'Not specified'}</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 className="text-xl font-semibold mb-2">Weight</h3>
+                    <p className="text-gray-700">{product.weight ? `${product.weight} grams` : 'Not specified'}</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 className="text-xl font-semibold mb-2">Dimensions</h3>
+                    <p className="text-gray-700">
+                      {product.dimensions?.length && product.dimensions?.width && product.dimensions?.height
+                        ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} cm`
+                        : 'Not specified'}
+                    </p>
+                  </div>
+                
+                  <div className="bg-white p-6 rounded-xl shadow-sm col-span-2">
+                    <h3 className="text-xl font-semibold mb-2">Specifications</h3>
+                    {product.specifications && Object.keys(product.specifications).length > 0 ? (
+                      <ul className="list-disc pl-5 text-gray-700">
+                        {Object.entries(product.specifications).map(([key, value]) => (
+                          <li key={key}><strong>{key}:</strong> {value}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-700">Not specified</p>
+                    )}
+                  </div>
+                  <div className="bg-white p-6 rounded-xl shadow-sm col-span-2">
+                    <h3 className="text-xl font-semibold mb-2">Tags</h3>
+                    <p className="text-gray-700">{product.tags.length > 0 ? product.tags.join(', ') : 'Not specified'}</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm">
                   <h3 className="text-xl font-semibold mb-2">Sizes</h3>
                   <div className="flex flex-wrap gap-3">
@@ -202,12 +263,27 @@ const ProductDetails = () => {
                   />
                 </div>
 
-                <Link
-                  to={`/design/${id}?size=${selectedSize}&color=${selectedColor}&customImage=${uploadedImage || ''}`}
-                  className="block bg-[#0d141c] text-white text-center text-xl font-semibold py-4 rounded-lg hover:bg-gray-800 transition"
-                >
-                  Customize Now
-                </Link>
+                {product.isActive ? (
+                  <button
+                    onClick={handleAddToCart}
+                    className="block bg-[#0d141c] text-white w-full text-center text-xl font-semibold py-4 rounded-lg hover:bg-gray-800 transition"
+                  >
+                    Add to Cart
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="block bg-gray-300 text-gray-500 w-full  text-center text-xl font-semibold py-4 rounded-lg cursor-not-allowed"
+                  >
+                    Not Available
+                  </button>
+                )}
+                 <button
+                    onClick={()=>navigate("/design")}
+                    className="block bg-[#0d141c] text-white w-full text-center text-xl font-semibold py-4 rounded-lg hover:bg-gray-800 transition"
+                  >
+                    Back
+                  </button>
               </div>
             </div>
           </>

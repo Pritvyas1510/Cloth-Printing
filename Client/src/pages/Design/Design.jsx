@@ -30,8 +30,7 @@ const Design = () => {
   }, []);
 
   const handleSelectProduct = (product) => {
-    setSelectedProduct(product);
-    navigate(`/design/${product._id}`);
+    navigate(`/productdetails/${product._id}`);
   };
 
   return (

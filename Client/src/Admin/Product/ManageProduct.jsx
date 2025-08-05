@@ -114,6 +114,11 @@ const ManageProduct = () => {
                 </h3>
                 <p className="text-gray-600 mb-2">
                   <strong>Price:</strong> ₹{product.price.toFixed(2)}
+                    <sup>  {product.discount > 0 && (
+                      <span className="ml-2 bg-red-100 text-md text-red-600 font-bold px-2 rounded-3xl">
+                        {product.discount}%
+                      </span>)}</sup>
+                  
                 </p>
                 <p className="text-gray-600 mb-2">
                   <strong>Sizes:</strong> {product.size.join(", ") || "None"}

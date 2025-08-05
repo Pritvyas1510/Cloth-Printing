@@ -47,7 +47,8 @@ const RAW_RUNTIME_STATE =
           ["react-router-dom", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:7.7.1"],\
           ["react-toastify", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:11.0.5"],\
           ["tailwindcss", "npm:4.1.11"],\
-          ["vite", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:7.0.6"]\
+          ["vite", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:7.0.6"],\
+          ["yup", "npm:1.7.0"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -1439,7 +1440,8 @@ const RAW_RUNTIME_STATE =
           ["react-router-dom", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:7.7.1"],\
           ["react-toastify", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:11.0.5"],\
           ["tailwindcss", "npm:4.1.11"],\
-          ["vite", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:7.0.6"]\
+          ["vite", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:7.0.6"],\
+          ["yup", "npm:1.7.0"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -2974,6 +2976,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["property-expr", [\
+      ["npm:2.0.6", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/property-expr-npm-2.0.6-2a0857ed05-10c0.zip/node_modules/property-expr/",\
+        "packageDependencies": [\
+          ["property-expr", "npm:2.0.6"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["proxy-from-env", [\
       ["npm:1.1.0", {\
         "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/proxy-from-env-npm-1.1.0-c13d07f26b-10c0.zip/node_modules/proxy-from-env/",\
@@ -3393,6 +3404,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["tiny-case", [\
+      ["npm:1.0.3", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/tiny-case-npm-1.0.3-8c9747c74e-10c0.zip/node_modules/tiny-case/",\
+        "packageDependencies": [\
+          ["tiny-case", "npm:1.0.3"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["tinyglobby", [\
       ["npm:0.2.14", {\
         "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/tinyglobby-npm-0.2.14-d4e4bcf80e-10c0.zip/node_modules/tinyglobby/",\
@@ -3400,6 +3420,15 @@ const RAW_RUNTIME_STATE =
           ["fdir", "virtual:d4e4bcf80e67f9de0540c123c7c4882e34dce6a8ba807a0a834f267f9132ee6bd264e69a49c6203aa89877ed3a5a5d633bfa002384881be452cc3a2d2fbcce0b#npm:6.4.6"],\
           ["picomatch", "npm:4.0.3"],\
           ["tinyglobby", "npm:0.2.14"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["toposort", [\
+      ["npm:2.0.2", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/toposort-npm-2.0.2-d472329c7d-10c0.zip/node_modules/toposort/",\
+        "packageDependencies": [\
+          ["toposort", "npm:2.0.2"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3419,6 +3448,15 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["prelude-ls", "npm:1.2.1"],\
           ["type-check", "npm:0.4.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["type-fest", [\
+      ["npm:2.19.0", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/type-fest-npm-2.19.0-918b953248-10c0.zip/node_modules/type-fest/",\
+        "packageDependencies": [\
+          ["type-fest", "npm:2.19.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3590,6 +3628,19 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/yocto-queue-npm-0.1.0-c6c9a7db29-10c0.zip/node_modules/yocto-queue/",\
         "packageDependencies": [\
           ["yocto-queue", "npm:0.1.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["yup", [\
+      ["npm:1.7.0", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/yup-npm-1.7.0-30f9a8545e-10c0.zip/node_modules/yup/",\
+        "packageDependencies": [\
+          ["property-expr", "npm:2.0.6"],\
+          ["tiny-case", "npm:1.0.3"],\
+          ["toposort", "npm:2.0.2"],\
+          ["type-fest", "npm:2.19.0"],\
+          ["yup", "npm:1.7.0"]\
         ],\
         "linkType": "HARD"\
       }]\
