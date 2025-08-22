@@ -1,65 +1,55 @@
 import express from "express";
-import Stripe from "stripe";
+import Razorpay from "razorpay";
 import requireAuth from "../middleware/authMiddleware.js";
-import Product from "../models/Product.js"; // adjust path if needed
 
 const router = express.Router();
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const razorpayKey = process.env.RAZORPAY_KEY;
+const razorpaySecret = process.env.RAZORPAY_SECRET;
 
-if (!stripeSecretKey) {
-  throw new Error("STRIPE_SECRET_KEY is not defined in environment variables.");
+if (!razorpayKey || !razorpaySecret) {
+  throw new Error(
+    "RAZORPAY_KEY or RAZORPAY_SECRET is not defined in environment variables."
+  );
 }
 
-const stripe = new Stripe(stripeSecretKey);
+const razorpay = new Razorpay({
+  key_id: razorpayKey,
+  key_secret: razorpaySecret,
+});
 
-router.post("/create-checkout-session", requireAuth, async (req, res) => {
-  const { products } = req.body;
+router.post("/create-payment", requireAuth, async (req, res) => {
+  const { amount } = req.body;
 
   try {
-    // Extract product IDs from the request
-    const productIds = products.map((item) => item.productId);
-    console.log(productIds);
-
-    // Fetch all products from DB
-    const dbProducts = await Product.find({ _id: { $in: productIds } });
-    // Check if all products exist
-    if (dbProducts.length !== productIds.length) {
-      return res.status(404).json({ message: "Some products do not exist." });
+    if (!amount || !Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
     }
 
-    // Create a map for easy lookup
-    const productMap = new Map();
-    dbProducts.forEach((prod) => productMap.set(prod._id.toString(), prod));
+    const rupeeAmount = Number(amount);
+    const paiseAmount = Math.round(rupeeAmount * 100);
 
-    // Prepare Stripe line items
-    const line_items = products.map((item) => {
-      const product = productMap.get(item.productId);
-      return {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: product.title,
-          },
-          unit_amount: Math.round(product.price * 100), // Convert dollars to cents
-        },
-        quantity: item.quantity,
-      };
+    const options = {
+      amount: paiseAmount,         // ✅ always integer
+      currency: "INR",
+      receipt: `order_rcptid_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
     });
-
-    // Create Stripe session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items,
-      success_url: "http://localhost:3000/payment-success",
-      cancel_url: "http://localhost:3000/payment-cancelled",
-    });
-
-    res.json({ id: session.id });
   } catch (err) {
-    console.error("Stripe error:", err.message);
-    res.status(500).json({ message: "Stripe checkout failed" });
+    console.error("Razorpay error:", {
+      message: err.message,
+      stack: err.stack,
+      userId: req.user?._id,
+      sessionId: req.headers["x-session-id"],
+    });
+    res.status(500).json({ message: "Payment creation failed", error: err.message });
   }
 });
 

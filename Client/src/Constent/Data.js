@@ -10,7 +10,7 @@ export const roleLinks = {
     { path: "/about", label: "About" },
   ],
   admin: [
-    { path: "/admin", label: "Home" },
-    { path: "/users", label: "Manage Users" },
+    { path: "/admin", label: "Product" },
+    { path: "/manageuser", label: "Order" },
   ],
 };

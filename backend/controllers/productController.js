@@ -1,4 +1,5 @@
 import Product from "../models/Product.js";
+import mongoose from "mongoose";
 
 // ========== CREATE PRODUCT ==========
 export const createProduct = async (req, res) => {
@@ -60,7 +61,7 @@ export const createProduct = async (req, res) => {
       size: sizesArray,
       color: colorsArray,
       images: imagePaths,
-      createdBy: req.user.id,
+      createdBy: req.user._id, // Changed from req.user.id
       category,
       material: material || "",
       stockQuantity,
@@ -96,14 +97,18 @@ export const getProducts = async (req, res) => {
 // ========== GET PRODUCT BY ID ==========
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+    const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
     res.json(product);
   } catch (error) {
     console.error("Get Product Error:", error.message);
-    res.status(500).json({ message: "Error fetching product" });
+    res.status(500).json({ message: "Error fetching product", error: error.message });
   }
 };
 

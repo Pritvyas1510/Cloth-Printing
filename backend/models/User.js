@@ -7,10 +7,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Name is required"],
       trim: true,
     },
-    mobile: {
-      type: String,
-      required: false,
-    },
+   
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -18,10 +15,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    address: {
-      type: String,
-      required: false,
-    },
+   
     password: {
       type: String,
       required: [true, "Password is required"],

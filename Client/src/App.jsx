@@ -18,6 +18,12 @@ import EditProduct from "./Admin/Product/EditProduct";
 import AllProduct from "./Admin/Product/AllProduct";
 import ProductDetails from "./pages/Design/Product/ProductDetails";
 import Profile from "./components/Profile";
+import Cart from "./pages/Cart/Cart";
+import Order from "./pages/Orders/Order";
+import Myorder from "./pages/My-Order/Myorder";
+import Manage from "./Admin/ManageUser/Manage";
+import AllOrder from "./Admin/ManageUser/Order/AllOrder";
+import OrderDesign from "./Admin/ManageUser/Order/OrderDesign";
 
 function App() {
   return (
@@ -43,7 +49,10 @@ function App() {
           {/* Client Routes */}
           <Route path="/design" element={<Design />} />
           <Route path="/productdetails/:id" element={<ProductDetails/>}/>
+          <Route path="/cart" element={<Cart/>}/>
           <Route path="/contact" element={<Contact />} />
+          <Route path="/order/:id" element={<Order/>}/>
+          <Route path="/myorder" element={<Myorder/>}/>
           {/* Admin Routes */}
           <Route path="/admin" element={<Adminhome/>}/>
           <Route path="/addproduct" element={<AddProduct/>}/>
@@ -51,6 +60,9 @@ function App() {
           <Route path="/viewproduct/:id" element={<ViewProduct/>}/>
           <Route path="/editproduct/:id" element={<EditProduct/>}/>
           <Route path="/allproduct" element={<AllProduct/>}/>
+          <Route path="/manageuser" element ={<Manage/>}/> 
+          <Route path="/allorder" element={<AllOrder/>}/>
+          <Route path="/orderdesign/:id" element={<OrderDesign/>}/>
           {/* Auth Routes */}
             <Route path="/login" element={<Login/>}/>
             <Route path="/register" element={<Register/>}/>

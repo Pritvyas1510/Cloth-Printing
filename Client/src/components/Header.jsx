@@ -4,7 +4,7 @@ import { useAuth } from "../AuthContext/AuthContext";
 import { roleLinks } from "../Constent/Data";
 
 const Header = () => {
-  const { isAuthenticated, user, handleLogout } = useAuth();
+  const { isAuthenticated, user, handleLogout, loading } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -20,6 +20,16 @@ const Header = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  if (loading) {
+    return (
+      <header className="bg-white shadow-md py-4">
+        <div className="container mx-auto px-4 flex items-center justify-center">
+          <div className="animate-pulse h-10 w-10 rounded-full bg-gray-200"></div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-white shadow-md py-4 relative transition-all duration-700 ease-in-out">
@@ -94,8 +104,11 @@ const Header = () => {
                     alt="User Avatar"
                     src={
                       user?.image ||
-                      "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                      "https://via.placeholder.com/150"
                     }
+                    onError={(e) => {
+                      e.target.src = "https://via.placeholder.com/150";
+                    }}
                   />
                 </div>
               </div>
@@ -104,15 +117,35 @@ const Header = () => {
                 className="menu menu-sm dropdown-content bg-gray-100 text-black font-semibold rounded-box z-10 mt-3 w-52 p-2 shadow transition-all duration-700 ease-in-out"
               >
                 <li>
-                  <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
                     Profile
                   </Link>
                 </li>
-                <li>
-                  <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)}>
-                    My Orders
-                  </Link>
-                </li>
+
+                {/* Show only if user is NOT admin */}
+                {user?.role !== "admin" && (
+                  <>
+                    <li>
+                      <Link
+                        to="/cart"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        My Cart
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/myorder"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        My Orders
+                      </Link>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
           )}

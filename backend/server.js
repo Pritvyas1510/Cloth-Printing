@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import dotenv from "dotenv/config";
 import cookieParser from "cookie-parser";
@@ -7,7 +8,10 @@ import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js"; // Fixed typo: profileRoute to profileRoutes
 import multer from "multer";
+
 const app = express();
 
 // Middleware
@@ -17,8 +21,8 @@ app.use(express.json());
 // Enable CORS with credentials
 app.use(
   cors({
-    origin: process.env.ORIGIN || "http://localhost:5173", // Fallback for development
-    credentials: true, // Allow cookies/auth headers
+    origin: process.env.ORIGIN || "http://localhost:5173",
+    credentials: true,
   })
 );
 
@@ -28,8 +32,10 @@ app.use("/uploads", express.static("Uploads"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/profile", profileRoutes); // Fixed typo
 
 // Global error-handling middleware
 app.use((err, req, res, next) => {
@@ -40,7 +46,7 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ message: err.message });
   }
   console.error("Server error:", err.message);
-  res.status(500).json({ message: "Server error" });
+  res.status(500).json({ message: "Server error", error: err.message });
 });
 
 // Connect to MongoDB and start server

@@ -4,26 +4,30 @@ import dotenv from "dotenv/config";
 const requireAuth = (req, res, next) => {
   try {
     const token = req.cookies?.token;
-
+    
+    console.log('Token received in middleware:', token ? 'Present' : 'Missing');
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
+      req.user = null; // Allow guest access
+      return next();
     }
 
-    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // console.log('Decoded token:', decoded);
     if (!decoded || typeof decoded !== "object" || !decoded.id) {
       throw new Error("Invalid token payload");
     }
-
-    // Assign user data to request object
+    console.log("decoded :-  ",decoded.id);
+    
     req.user = {
-      id: decoded.id,
+      _id: decoded.id,
       role: decoded.role || "user",
     };
+    // console.log('req.user set:', req.user);
+
 
     next();
   } catch (error) {
-    console.error("Authentication error:", error.message);
+    console.error("Authentication error:", error.message, 'Token:', token ? 'Present' : 'Missing');
     let message = "Unauthorized: Invalid token";
     if (error.name === "TokenExpiredError") {
       message = "Unauthorized: Token has expired";

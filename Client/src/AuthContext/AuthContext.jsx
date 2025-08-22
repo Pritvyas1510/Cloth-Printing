@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from '../Axios/AxiosInstance';
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import axios from "../Axios/AxiosInstance";
 
 const AuthContext = createContext();
 
@@ -8,16 +8,65 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Memoize user to prevent unnecessary re-renders
+  const memoizedUser = useMemo(() => user, [user?._id, user?.image]);
+
+  // Fetch profile image for the user
+  const fetchProfileImage = async (userId) => {
+    try {
+      const res = await axios.get(`/api/profile/${userId}`, { withCredentials: true });
+      const profileImage = res.data.profileImage || "https://via.placeholder.com/150";
+      setUser((prevUser) => ({
+        ...prevUser,
+        image: profileImage,
+      }));
+      // Update localStorage
+      const storedData = JSON.parse(localStorage.getItem("userData")) || {};
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({ ...storedData, image: profileImage })
+      );
+    } catch (error) {
+      console.error("Error fetching profile image:", error.response?.data || error.message);
+      setUser((prevUser) => ({
+        ...prevUser,
+        image: "https://via.placeholder.com/150",
+      }));
+    }
+  };
+
+  // Verify authentication with backend
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        const response = await axios.get('/api/auth/verify', { withCredentials: true });
+        const storedData = JSON.parse(localStorage.getItem("userData"));
+        if (storedData?._id) {
+          setUser(storedData);
+          setIsAuthenticated(true);
+          await fetchProfileImage(storedData._id);
+        }
+        const response = await axios.get("/api/auth/verify", { withCredentials: true });
         if (response.data.success) {
           setIsAuthenticated(true);
           setUser(response.data.user);
+          localStorage.setItem(
+            "userData",
+            JSON.stringify({
+              ...response.data.user,
+              sessionId: response.data.sessionId || null,
+            })
+          );
+          await fetchProfileImage(response.data.user._id);
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+          localStorage.removeItem("userData");
         }
       } catch (error) {
-        console.error('Auth verification error:', error.response ? error.response.data : error.message);
+        console.error("Auth verification error:", error.response?.data || error.message);
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem("userData");
       } finally {
         setLoading(false);
       }
@@ -25,57 +74,66 @@ export const AuthProvider = ({ children }) => {
     verifyAuth();
   }, []);
 
+  // Login function
   const handleLogin = async (credentials, navigate) => {
     try {
-      console.log('Login request URL:', axios.defaults.baseURL + '/api/auth/login');
-      console.log('Login request data:', credentials);
-      const response = await axios.post('/api/auth/login', credentials, { withCredentials: true });
+      const response = await axios.post("/api/auth/login", credentials, { withCredentials: true });
       setIsAuthenticated(true);
       setUser(response.data.user);
-      // Check user role and navigate accordingly
-      const redirectPath = response.data.user.role === 'admin' ? '/admin' : '/';
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({
+          ...response.data.user,
+          sessionId: response.data.sessionId || null,
+        })
+      );
+      await fetchProfileImage(response.data.user._id);
+      const redirectPath = response.data.user.role === "admin" ? "/admin" : "/";
       navigate(redirectPath);
       return { success: true, message: response.data.message };
     } catch (error) {
-      console.error('Login error:', error.response ? error.response.data : error.message);
-      return { success: false, message: error.response?.data?.message || 'Login failed' };
+      return { success: false, message: error.response?.data?.message || "Login failed" };
     }
   };
 
-const handleRegister = async (data, navigate) => {
-  try {
-    console.log('Register request URL:', axios.defaults.baseURL + '/api/auth/register');
-    console.log('Register request data:', data);
-    const response = await axios.post('/api/auth/register', data, { withCredentials: true });
+  // Register function
+  const handleRegister = async (data, navigate) => {
+    try {
+      const response = await axios.post("/api/auth/register", data, { withCredentials: true });
+      setIsAuthenticated(true);
+      setUser(response.data.user);
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({
+          ...response.data.user,
+          sessionId: response.data.sessionId || null,
+        })
+      );
+      await fetchProfileImage(response.data.user._id);
+      navigate("/");
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Registration failed" };
+    }
+  };
 
-    setIsAuthenticated(true);
-    setUser(response.data.user); // ✅ Properly set full user object including role
-
-    navigate('/');
-    return { success: true, message: response.data.message };
-  } catch (error) {
-    console.error('Register error:', error.response ? error.response.data : error.message);
-    return { success: false, message: error.response?.data?.message || 'Registration failed' };
-  }
-};
-
-
+  // Logout function
   const handleLogout = async () => {
     try {
-      console.log('Logout request URL:', axios.defaults.baseURL + '/api/auth/logout');
-      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
       setIsAuthenticated(false);
       setUser(null);
-      return { success: true, message: 'Logged out successfully' };
+      localStorage.removeItem("sessionId");
+      localStorage.removeItem("userData");
+      return { success: true, message: "Logged out successfully" };
     } catch (error) {
-      console.error('Logout error:', error.response ? error.response.data : error.message);
-      return { success: false, message: 'Logout failed' };
+      return { success: false, message: "Logout failed" };
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, handleLogin, handleRegister, handleLogout, loading }}
+      value={{ isAuthenticated, user: memoizedUser, handleLogin, handleRegister, handleLogout, loading }}
     >
       {children}
     </AuthContext.Provider>
