@@ -4,22 +4,19 @@ import { useAuth } from "../../../AuthContext/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import OrderDesign from "./OrderDesign";
 import ShippedDetails from "./ShippedDetails";
 
-const AllOrder = () => {
+const ShippedOrder = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedShippedId, setSelectedShippedId] = useState(null);
 
   const navigate = useNavigate();
 
-  const CLOUDINARY_BASE_URL =
-    "https://res.cloudinary.com/dopqalob9/image/upload";
+  const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dopqalob9/image/upload";
 
   // Status flow in order
   const statusSteps = ["processing", "design", "shipped", "delivered"];
@@ -35,16 +32,19 @@ const AllOrder = () => {
         },
       });
       const ordersData = Array.isArray(response.data) ? response.data : [];
-      const validOrders = ordersData.filter(
+      // Filter only orders with "shipped" status
+      const shippedOrders = ordersData.filter(
         (order) =>
           order._id &&
           typeof order._id === "string" &&
-          order.status?.toLowerCase() !== "completed"
+          order.status?.toLowerCase() === "design"
       );
-      setOrders(validOrders);
+      setOrders(shippedOrders);
+
+      // Fetch product details for the filtered orders
       const productIds = [
         ...new Set(
-          validOrders.flatMap((order) =>
+          shippedOrders.flatMap((order) =>
             order.products.map((item) =>
               typeof item.product === "object" && item.product?._id
                 ? item.product._id.toString()
@@ -91,11 +91,7 @@ const AllOrder = () => {
   }, [isAuthenticated, authLoading, navigate]);
 
   const statusStyles = {
-    pending: "bg-yellow-100 text-yellow-800",
-    design: "bg-blue-100 text-blue-800",
     shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
   };
 
   const getExpectedArrival = (createdAt) => {
@@ -109,11 +105,10 @@ const AllOrder = () => {
   };
 
   const openModal = (orderId) => {
-    setSelectedOrderId(orderId);
+    setSelectedShippedId(orderId);
   };
 
   const closeModal = () => {
-    setSelectedOrderId(null);
     setSelectedShippedId(null);
     fetchOrdersAndProducts();
   };
@@ -137,7 +132,7 @@ const AllOrder = () => {
   if (orders.length === 0) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-600 text-base">No orders found.</p>
+        <p className="text-gray-600 text-base">No orders in shipped stage found.</p>
       </div>
     );
   }
@@ -145,7 +140,7 @@ const AllOrder = () => {
   return (
     <div className="container mx-auto p-4 max-w-6xl bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
       <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">
-        All Orders
+        Order Shipped 
       </h1>
       <div className="space-y-6">
         {orders.map((order) => {
@@ -368,40 +363,10 @@ const AllOrder = () => {
                 </div>
 
                 <div className="flex gap-3">
-                  {/* Design Button */}
-                  <button
-                    className={`px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform 
-                     ${
-                       order.status.toLowerCase() === "design" ||
-                       order.status.toLowerCase() === "shipped" ||
-                       order.status.toLowerCase() === "delivered"
-                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                         : "bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white hover:scale-105"
-                     }`}
-                    disabled={
-                      order.status.toLowerCase() === "design" ||
-                      order.status.toLowerCase() === "shipped" ||
-                      order.status.toLowerCase() === "delivered"
-                    }
-                    onClick={() => openModal(order._id)}
-                  >
-                    Design
-                  </button>
-
                   {/* Shipped Button */}
                   <button
-                    className={`px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform 
-                      ${
-                        order.status.toLowerCase() === "shipped" ||
-                        order.status.toLowerCase() === "delivered"
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white hover:scale-105"
-                      }`}
-                    disabled={
-                      order.status.toLowerCase() === "shipped" ||
-                      order.status.toLowerCase() === "delivered"
-                    }
-                    onClick={() => setSelectedShippedId(order._id)}
+                    className="px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white hover:scale-105"
+                    onClick={() => openModal(order._id)}
                   >
                     Shipped
                   </button>
@@ -412,15 +377,6 @@ const AllOrder = () => {
         })}
       </div>
 
-      {/* Modal */}
-      {selectedOrderId && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
-            <OrderDesign orderId={selectedOrderId} onClose={closeModal} />
-          </div>
-        </div>
-      )}
-
       {/* Shipped Modal */}
       {selectedShippedId && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
@@ -429,6 +385,7 @@ const AllOrder = () => {
           </div>
         </div>
       )}
+
       <ToastContainer
         position="bottom-left"
         autoClose={2000}
@@ -438,4 +395,4 @@ const AllOrder = () => {
   );
 };
 
-export default AllOrder;
+export default ShippedOrder;

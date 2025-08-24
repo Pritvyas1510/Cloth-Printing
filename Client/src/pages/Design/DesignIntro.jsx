@@ -36,22 +36,32 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
   // Extract unique sizes and colors for filters
   const availableSizes = useMemo(() => {
     const sizes = new Set();
-    products.forEach((product) => product.size.forEach((size) => sizes.add(size)));
+    products.forEach((product) =>
+      product.size.forEach((size) => sizes.add(size))
+    );
     return Array.from(sizes).sort();
   }, [products]);
 
   const availableColors = useMemo(() => {
     const colors = new Set();
-    products.forEach((product) => product.color.forEach((color) => colors.add(color)));
+    products.forEach((product) =>
+      product.color.forEach((color) => colors.add(color))
+    );
     return Array.from(colors).sort();
   }, [products]);
 
   // Filter products based on search query and selected filters
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesSize = selectedSizes.length === 0 || selectedSizes.some((size) => product.size.includes(size));
-      const matchesColor = selectedColors.length === 0 || selectedColors.some((color) => product.color.includes(color));
+      const matchesSearch = product.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesSize =
+        selectedSizes.length === 0 ||
+        selectedSizes.some((size) => product.size.includes(size));
+      const matchesColor =
+        selectedColors.length === 0 ||
+        selectedColors.some((color) => product.color.includes(color));
       return matchesSearch && matchesSize && matchesColor;
     });
   }, [products, searchQuery, selectedSizes, selectedColors]);
@@ -60,17 +70,23 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
   const suggestions = useMemo(() => {
     if (!searchQuery) return [];
     return products
-      .filter((product) => product.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter((product) =>
+        product.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
       .map((product) => product.title)
       .slice(0, 5);
   }, [products, searchQuery]);
 
   const handleSizeToggle = (size) => {
-    setTempSizes((prev) => (prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]));
+    setTempSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
   };
 
   const handleColorToggle = (color) => {
-    setTempColors((prev) => (prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]));
+    setTempColors((prev) =>
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
+    );
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -165,26 +181,38 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
                   key={product._id}
                   to={`/productdetails/${product._id}`}
                   className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 block"
-                 
                 >
                   <img
-                    src={product.images[0] ? `${BASE_URL}/${product.images[0]}` : "https://via.placeholder.com/300"}
+                    src={product.images[0] || "https://via.placeholder.com/300"}
                     alt={product.title}
                     className="w-full h-48 object-contain rounded-lg mb-4"
-                    onError={(e) => (e.target.src = "https://via.placeholder.com/300")}
+                    onError={(e) =>
+                      (e.target.src = "https://via.placeholder.com/300")
+                    }
                   />
-                  <h3 className="text-xl font-semibold text-[#0d141c] mb-2 truncate">{product.title}</h3>
+
+                  <h3 className="text-xl font-semibold text-[#0d141c] mb-2 truncate">
+                    {product.title}
+                  </h3>
                   <div className="flex items-center gap-2 mb-3">
-                    <p className="text-lg text-green-600 font-semibold">₹{product.price.toFixed(2)}</p>
+                    <p className="text-lg text-green-600 font-semibold">
+                      ₹{product.price.toFixed(2)}
+                    </p>
                     {discount > 0 && (
                       <>
-                        <span className="text-sm text-[#49739c] line-through">₹{originalPrice}</span>
-                        <span className="text-sm text-red-600 font-semibold">{product.discount}% OFF</span>
+                        <span className="text-sm text-[#49739c] line-through">
+                          ₹{originalPrice}
+                        </span>
+                        <span className="text-sm text-red-600 font-semibold">
+                          {product.discount}% OFF
+                        </span>
                       </>
                     )}
                   </div>
                   <div className="mb-3">
-                    <p className="text-[#0d141c] text-sm font-medium mb-1">Sizes:</p>
+                    <p className="text-[#0d141c] text-sm font-medium mb-1">
+                      Sizes:
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {product.size.map((size) => (
                         <span
@@ -197,13 +225,19 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
                     </div>
                   </div>
                   <div className="mb-4">
-                    <p className="text-[#0d141c] text-sm font-medium mb-1">Colors:</p>
+                    <p className="text-[#0d141c] text-sm font-medium mb-1">
+                      Colors:
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {product.color.map((color) => (
                         <span
                           key={color}
-                          className={`w-6 h-6 rounded-full ${colorStyles[color]} border-2 ${
-                            color === "White" ? "border-[#cedbe8]" : "border-[#0d141c]"
+                          className={`w-6 h-6 rounded-full ${
+                            colorStyles[color]
+                          } border-2 ${
+                            color === "White"
+                              ? "border-[#cedbe8]"
+                              : "border-[#0d141c]"
                           } hover:scale-105 transition duration-200`}
                           title={color}
                         ></span>
@@ -217,12 +251,19 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
         )}
 
         {/* Filter Modal */}
-        <dialog id="filter_modal" className="modal modal-bottom sm:modal-middle">
+        <dialog
+          id="filter_modal"
+          className="modal modal-bottom sm:modal-middle"
+        >
           <div className="modal-box bg-white rounded-xl p-6 shadow-xl">
-            <h3 className="font-bold text-xl text-[#0d141c] mb-4">Filter Products</h3>
+            <h3 className="font-bold text-xl text-[#0d141c] mb-4">
+              Filter Products
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="text-[#0d141c] font-semibold text-base mb-2">Sizes</h4>
+                <h4 className="text-[#0d141c] font-semibold text-base mb-2">
+                  Sizes
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {availableSizes.map((size) => (
                     <button
@@ -240,14 +281,18 @@ const DesignIntro = ({ products, loading, onSelectProduct }) => {
                 </div>
               </div>
               <div>
-                <h4 className="text-[#0d141c] font-semibold text-base mb-2">Colors</h4>
+                <h4 className="text-[#0d141c] font-semibold text-base mb-2">
+                  Colors
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {availableColors.map((color) => (
                     <button
                       key={color}
                       onClick={() => handleColorToggle(color)}
                       className={`w-8 h-8 rounded-full border-2 transition duration-200 ${
-                        tempColors.includes(color) ? "border-[#0d141c]" : "border-[#cedbe8]"
+                        tempColors.includes(color)
+                          ? "border-[#0d141c]"
+                          : "border-[#cedbe8]"
                       } ${colorStyles[color]} hover:scale-105`}
                       title={color}
                     ></button>

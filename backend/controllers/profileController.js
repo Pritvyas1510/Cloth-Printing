@@ -5,62 +5,40 @@ import cloudinary from "../utils/cloudinary.js";
 import fs from "fs";
 import mongoose from "mongoose";
 
+// CREATE PROFILE
 export const createProfile = async (req, res) => {
   try {
     console.log("Request body:", req.body);
     console.log("File:", req.file);
-    console.log("Authenticated user:", req.user);
 
     const { name, email, mobile, address, pincode, gender, dob } = req.body;
 
-    // Validate required fields
     if (!name || !email || !mobile || !address || !pincode) {
-      return res.status(400).json({ message: "All required fields (name, email, mobile, address, pincode) must be provided" });
+      return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    // Validate user ID
     if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-    // Check for existing profile
     const existingProfile = await UserProfile.findOne({ user: req.user._id });
     if (existingProfile) {
       return res.status(400).json({ message: "Profile already exists for this user" });
     }
 
-    // Check for duplicate email
     const emailExists = await UserProfile.findOne({ email });
     if (emailExists) {
-      return res.status(400).json({ message: "Email is already in use by another profile" });
+      return res.status(400).json({ message: "Email is already in use" });
     }
 
-    // Validate and upload profile image
-    let profileImage = req.user.image || "https://via.placeholder.com/150";
-    if (req.file?.path) {
-      try {
-        if (!fs.existsSync(req.file.path)) {
-          return res.status(500).json({ message: `Uploaded file not found at ${req.file.path}` });
-        }
-        console.log("Multer saved file path:", req.file.path);
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: "profileImages",
-        });
-        profileImage = result.secure_url;
-        fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError.message);
-        return res.status(500).json({ message: "Failed to upload image to Cloudinary", error: uploadError.message });
-      }
+    let profileImage = "https://via.placeholder.com/150";
+    let profileImageId = null;
+
+    if (req.file) {
+      profileImage = req.file.path;       // secure_url
+      profileImageId = req.file.filename; // public_id
     }
 
-    // Create profile
     const profile = await UserProfile.create({
       name,
       email,
@@ -70,44 +48,42 @@ export const createProfile = async (req, res) => {
       gender: gender || null,
       dob: dob ? new Date(dob) : null,
       profileImage,
+      profileImageId,
       user: req.user._id,
     });
 
     res.status(201).json({ message: "Profile created", profile });
   } catch (err) {
-    console.error("Create profile error:", err);
-    if (err.code === 11000) {
-      return res.status(400).json({ message: "Duplicate email detected", error: err.message });
-    }
+    console.error("Create profile error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
+// UPDATE PROFILE
 export const updateProfile = async (req, res) => {
   try {
-    console.log("Update request body:", req.body);
+    console.log("Update body:", req.body);
     console.log("Update file:", req.file);
-    console.log("Authenticated user:", req.user);
-    const updatedData = { ...req.body };
-
-    if (req.file?.path) {
-      try {
-        if (!fs.existsSync(req.file.path)) {
-          return res.status(500).json({ message: `Uploaded file not found at ${req.file.path}` });
-        }
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: "profileImages",
-        });
-        updatedData.profileImage = result.secure_url;
-        fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError.message);
-        return res.status(500).json({ message: "Failed to upload image to Cloudinary", error: uploadError.message });
-      }
-    }
 
     if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
       return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const profile = await UserProfile.findOne({ user: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const updatedData = { ...req.body };
+
+    if (req.file) {
+      // delete old Cloudinary image if exists
+      if (profile.profileImageId) {
+        await cloudinary.uploader.destroy(profile.profileImageId);
+      }
+
+      updatedData.profileImage = req.file.path;       // secure_url
+      updatedData.profileImageId = req.file.filename; // public_id
     }
 
     const updatedProfile = await UserProfile.findOneAndUpdate(
@@ -116,16 +92,9 @@ export const updateProfile = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!updatedProfile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
-
     res.status(200).json({ message: "Profile updated", profile: updatedProfile });
   } catch (err) {
     console.error("Update profile error:", err.message);
-    if (err.code === 11000) {
-      return res.status(400).json({ message: "Duplicate email detected", error: err.message });
-    }
     res.status(500).json({ message: "Update error", error: err.message });
   }
 };

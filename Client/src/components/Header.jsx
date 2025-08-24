@@ -144,6 +144,14 @@ const Header = () => {
                         My Orders
                       </Link>
                     </li>
+                    <li>
+                      <Link
+                        to="/complatedorder"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Completed Orders
+                      </Link>
+                    </li>
                   </>
                 )}
               </ul>

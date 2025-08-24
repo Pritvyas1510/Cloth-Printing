@@ -66,9 +66,9 @@ const Cart = () => {
   const updateDialogRef = useRef(null);
   const deleteDialogRef = useRef(null);
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
   const CLOUDINARY_BASE_URL =
-    "https://res.cloudinary.com/das7xphnt/image/upload";
+    "https://res.cloudinary.com/dopqalob9/image/upload";
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -125,6 +125,23 @@ const Cart = () => {
     };
     fetchCart();
   }, []);
+
+  // Helper to decide if image is Cloudinary URL or local
+  const getImageUrl = (image) => {
+  if (!image) return "https://via.placeholder.com/150";
+
+  // If full Cloudinary or any external URL
+  if (image.startsWith("http")) return image;
+
+  // If it's Cloudinary public_id
+  if (image.includes("/")) {
+    return `https://res.cloudinary.com/dopqalob9/image/upload/${image}`;
+  }
+
+  // Otherwise assume local backend
+  return `${BASE_URL}/${image}`;
+};
+
 
   const handleUpdateItem = async (e) => {
     e.preventDefault();
@@ -334,14 +351,15 @@ const Cart = () => {
               <div className="h-48 bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200 overflow-hidden">
                 {products[item.productId._id || item.productId]?.images?.[0] ? (
                   <img
-                    src={`${BASE_URL}/${
-                      products[item.productId._id || item.productId].images[0]
-                    }`}
+                    src={getImageUrl(
+                      products[item.productId._id || item.productId]
+                        ?.images?.[0]
+                    )}
                     alt="Product Image"
                     className="object-contain h-full max-w-full transition-transform duration-300 hover:scale-110"
-                    onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/150";
-                    }}
+                    onError={(e) =>
+                      (e.target.src = "https://via.placeholder.com/150")
+                    }
                   />
                 ) : (
                   <div className="text-gray-500 font-medium text-sm">
@@ -384,12 +402,12 @@ const Cart = () => {
               <div className="h-48 bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200 overflow-hidden">
                 {item.customDesign ? (
                   <img
-                    src={`${CLOUDINARY_BASE_URL}/${item.customDesign}`}
+                    src={getImageUrl(item.customDesign)}
                     alt="Custom Design"
                     className="object-contain h-full max-w-full transition-transform duration-300 hover:scale-110"
-                    onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/150";
-                    }}
+                    onError={(e) =>
+                      (e.target.src = "https://via.placeholder.com/150")
+                    }
                   />
                 ) : (
                   <div className="text-gray-500 font-medium text-sm">

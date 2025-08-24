@@ -94,7 +94,9 @@ const ViewProduct = () => {
   const handleDelete = async () => {
     try {
       await AxiosInstance.delete(`/api/products/${id}`);
-      toast.success("Product deleted successfully", { position: "bottom-left" });
+      toast.success("Product deleted successfully", {
+        position: "bottom-left",
+      });
       navigate("/manageproduct");
     } catch (err) {
       toast.error("Failed to delete product", { position: "bottom-left" });
@@ -161,15 +163,18 @@ const ViewProduct = () => {
                   key={currentImageIndex}
                   src={
                     product.images[currentImageIndex]
-                      ? `${BASE_URL}/${product.images[currentImageIndex]}`
+                      ? product.images[currentImageIndex] // ✅ direct Cloudinary URL
                       : "https://via.placeholder.com/600"
                   }
                   alt={product.title}
                   className={`w-full h-[400px] object-contain transition-opacity duration-500 ease-in-out ${
                     fade ? "opacity-100" : "opacity-0"
                   }`}
-                  onError={(e) => (e.target.src = "https://via.placeholder.com/600")}
+                  onError={(e) =>
+                    (e.target.src = "https://via.placeholder.com/600")
+                  }
                 />
+
                 {product.images.length > 1 && (
                   <>
                     <button
@@ -194,7 +199,7 @@ const ViewProduct = () => {
                 {product.images.map((image, index) => (
                   <img
                     key={index}
-                    src={`${BASE_URL}/${image}`}
+                    src={image} // ✅ already Cloudinary secure_url
                     alt={`Thumbnail ${index}`}
                     className={`w-20 h-20 object-contain rounded-md cursor-pointer ${
                       index === currentImageIndex
@@ -208,7 +213,9 @@ const ViewProduct = () => {
                         setFade(true);
                       }, 300);
                     }}
-                    onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
+                    onError={(e) =>
+                      (e.target.src = "https://via.placeholder.com/100")
+                    }
                   />
                 ))}
               </div>
@@ -224,15 +231,15 @@ const ViewProduct = () => {
                   <p className="text-2xl text-purple-600 font-semibold">
                     ₹{product.price.toFixed(2)}
                     <sup>
-                    {product.discount > 0 && (
-                      <span className="ml-2 bg-red-100 text-md text-red-600 font-bold px-2 rounded-3xl">
-                        {product.discount}%
-                      </span>
-                    )}</sup>
+                      {product.discount > 0 && (
+                        <span className="ml-2 bg-red-100 text-md text-red-600 font-bold px-2 rounded-3xl">
+                          {product.discount}%
+                        </span>
+                      )}
+                    </sup>
                   </p>
-                  {product.rating && (
-                    renderRating(product.rating.average, product.rating.count)
-                  )}
+                  {product.rating &&
+                    renderRating(product.rating.average, product.rating.count)}
                 </div>
                 <p className="text-gray-700 mb-4">
                   {product.description || "No description available."}
@@ -243,14 +250,18 @@ const ViewProduct = () => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Category
                 </h3>
-                <p className="text-gray-700">{product.category || "Not specified"}</p>
+                <p className="text-gray-700">
+                  {product.category || "Not specified"}
+                </p>
               </div>
 
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Material
                 </h3>
-                <p className="text-gray-700">{product.material || "Not specified"}</p>
+                <p className="text-gray-700">
+                  {product.material || "Not specified"}
+                </p>
               </div>
 
               <div>
@@ -264,14 +275,18 @@ const ViewProduct = () => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Brand
                 </h3>
-                <p className="text-gray-700">{product.brand || "Not specified"}</p>
+                <p className="text-gray-700">
+                  {product.brand || "Not specified"}
+                </p>
               </div>
 
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Weight
                 </h3>
-                <p className="text-gray-700">{product.weight ? `${product.weight} grams` : "Not specified"}</p>
+                <p className="text-gray-700">
+                  {product.weight ? `${product.weight} grams` : "Not specified"}
+                </p>
               </div>
 
               <div>
@@ -279,7 +294,9 @@ const ViewProduct = () => {
                   Dimensions
                 </h3>
                 <p className="text-gray-700">
-                  {product.dimensions?.length && product.dimensions?.width && product.dimensions?.height
+                  {product.dimensions?.length &&
+                  product.dimensions?.width &&
+                  product.dimensions?.height
                     ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} cm`
                     : "Not specified"}
                 </p>
@@ -289,20 +306,25 @@ const ViewProduct = () => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Status
                 </h3>
-                <p className="text-gray-700">{product.isActive ? "Active" : "Inactive"}</p>
+                <p className="text-gray-700">
+                  {product.isActive ? "Active" : "Inactive"}
+                </p>
               </div>
 
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Specifications
                 </h3>
-                {product.specifications && Object.keys(product.specifications).length > 0 ? (
+                {product.specifications &&
+                Object.keys(product.specifications).length > 0 ? (
                   <ul className="list-disc pl-5 text-gray-700">
-                    {Object.entries(product.specifications).map(([key, value]) => (
-                      <li key={key}>
-                        <strong>{key}:</strong> {value}
-                      </li>
-                    ))}
+                    {Object.entries(product.specifications).map(
+                      ([key, value]) => (
+                        <li key={key}>
+                          <strong>{key}:</strong> {value}
+                        </li>
+                      )
+                    )}
                   </ul>
                 ) : (
                   <p className="text-gray-700">Not specified</p>
@@ -313,7 +335,11 @@ const ViewProduct = () => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Tags
                 </h3>
-                <p className="text-gray-700">{product.tags.length > 0 ? product.tags.join(", ") : "Not specified"}</p>
+                <p className="text-gray-700">
+                  {product.tags.length > 0
+                    ? product.tags.join(", ")
+                    : "Not specified"}
+                </p>
               </div>
 
               <div>

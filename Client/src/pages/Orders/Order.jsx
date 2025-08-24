@@ -25,9 +25,26 @@ const Order = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState("Razorpay");
   const [products, setProducts] = useState({});
-  const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/das7xphnt/image/upload";
-  const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY || "rzp_test_VQhEfe2NCXbbwI";
+  const CLOUDINARY_BASE_URL =
+    "https://res.cloudinary.com/dopqalob9/image/upload";
+  const RAZORPAY_KEY_ID =
+    import.meta.env.VITE_RAZORPAY_KEY || "rzp_test_VQhEfe2NCXbbwI";
   const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+
+  const getImageUrl = (image) => {
+    if (!image) return "https://via.placeholder.com/150";
+
+    // Full Cloudinary or external link
+    if (image.startsWith("http")) return image;
+
+    // Cloudinary public_id (folder/filename)
+    if (image.includes("/")) {
+      return `https://res.cloudinary.com/dopqalob9/image/upload/${image}`;
+    }
+
+    // Local backend upload
+    return `${BASE_URL}/${image}`;
+  };
 
   useEffect(() => {
     loadRazorpayScript();
@@ -81,17 +98,23 @@ const Order = () => {
         if (fetchedOrder?.items?.length > 0 || cartData?.items?.length > 0) {
           const items = fetchedOrder?.items || cartData.items;
           const productPromises = items.map((item) => {
-            const productId = item.productId?._id || item.productId || item.product;
+            const productId =
+              item.productId?._id || item.productId || item.product;
             if (!productId || typeof productId !== "string") {
               console.warn("Invalid productId:", productId);
               return Promise.resolve({ data: null });
             }
-            return axios.get(`/api/products/${productId}`).catch(() => ({ data: null }));
+            return axios
+              .get(`/api/products/${productId}`)
+              .catch(() => ({ data: null }));
           });
           const productResponses = await Promise.all(productPromises);
           const productMap = {};
           productResponses.forEach((res, index) => {
-            const productId = items[index].productId?._id || items[index].productId || items[index].product;
+            const productId =
+              items[index].productId?._id ||
+              items[index].productId ||
+              items[index].product;
             productMap[productId] = res.data || {
               _id: productId,
               title: "Unknown Product",
@@ -103,7 +126,9 @@ const Order = () => {
       } catch (error) {
         console.error("Fetch error:", error.response?.data || error.message);
         toast.error(
-          `Failed to load order: ${error.response?.data?.message || error.message}`,
+          `Failed to load order: ${
+            error.response?.data?.message || error.message
+          }`,
           { position: "top-left" }
         );
         setOrderData({ items: [] });
@@ -175,10 +200,14 @@ const Order = () => {
         console.warn("Cart is empty or not found");
         return;
       }
-      await axios.post("/api/cart/clear", {}, {
-        headers: { "x-session-id": sessionId },
-        withCredentials: true,
-      });
+      await axios.post(
+        "/api/cart/clear",
+        {},
+        {
+          headers: { "x-session-id": sessionId },
+          withCredentials: true,
+        }
+      );
       setOrderData({ items: [] });
       const response = await axios.get("/api/cart/get", {
         headers: { "x-session-id": sessionId },
@@ -195,228 +224,277 @@ const Order = () => {
         status: error.response?.status,
         url: error.config?.url,
       });
-      toast.error(`Failed to clear cart: ${error.response?.data?.message || error.message}`, {
-        position: "top-left",
-      });
+      toast.error(
+        `Failed to clear cart: ${
+          error.response?.data?.message || error.message
+        }`,
+        {
+          position: "top-left",
+        }
+      );
       throw error;
     }
   };
 
-  const handleSubmitOrder = async (e) => {
-    e.preventDefault();
+const handleSubmitOrder = async (e) => {
+  e.preventDefault();
 
-    console.log("Submitting order with paymentMethod:", paymentMethod); // ADDED: Debug payment method
+  console.log("Submitting order with paymentMethod:", paymentMethod);
 
-    if (!orderData || !id) {
-      toast.error("Order data or ID is missing.", { position: "top-left" });
-      return;
-    }
+  if (!orderData || !id) {
+    toast.error("Order data or ID is missing.", { position: "top-left" });
+    return;
+  }
 
-    if (!orderData.items?.length) {
-      toast.error("No items in the order.", { position: "top-left" });
-      return;
-    }
+  if (!orderData.items?.length) {
+    toast.error("No items in the order.", { position: "top-left" });
+    return;
+  }
 
-    if (
-      !address.street ||
-      !address.city ||
-      !address.state ||
-      !address.postalCode ||
-      !address.country
-    ) {
-      toast.error("Please fill all address fields.", { position: "top-left" });
-      return;
-    }
+  if (
+    !address.street ||
+    !address.city ||
+    !address.state ||
+    !address.postalCode ||
+    !address.country
+  ) {
+    toast.error("Please fill all address fields.", { position: "top-left" });
+    return;
+  }
 
-    const sessionId = localStorage.getItem("sessionId");
-    if (!sessionId) {
-      toast.error("Session ID is missing. Please log in again.", { position: "top-left" });
-      navigate("/login");
-      return;
-    }
-
-    const invalidProduct = orderData.items.find((item) => {
-      const productId = item.productId?._id || item.productId || item.product;
-      return (
-        !productId ||
-        !mongoose.Types.ObjectId.isValid(productId) ||
-        !Number.isFinite(Number(item.price)) ||
-        !Number.isFinite(Number(item.quantity))
-      );
+  const sessionId = localStorage.getItem("sessionId");
+  if (!sessionId) {
+    toast.error("Session ID is missing. Please log in again.", {
+      position: "top-left",
     });
-    if (invalidProduct) {
-      console.error("Invalid product:", invalidProduct);
-      toast.error(
-        "Invalid product data. Ensure all items have a valid product ID, price, and quantity.",
-        { position: "top-left" }
-      );
+    navigate("/login");
+    return;
+  }
+
+  const invalidProduct = orderData.items.find((item) => {
+    const productId = item.productId?._id || item.productId || item.product;
+    return (
+      !productId ||
+      !mongoose.Types.ObjectId.isValid(productId) ||
+      !Number.isFinite(Number(item.price)) ||
+      !Number.isFinite(Number(item.quantity))
+    );
+  });
+  if (invalidProduct) {
+    console.error("Invalid product:", invalidProduct);
+    toast.error(
+      "Invalid product data. Ensure all items have a valid product ID, price, and quantity.",
+      { position: "top-left" }
+    );
+    return;
+  }
+
+  try {
+    const cartCheck = await axios.get("/api/cart/get", {
+      headers: { "x-session-id": sessionId },
+      withCredentials: true,
+    });
+    if (!cartCheck.data?.items?.length) {
+      toast.error("Cart is empty. Add items to proceed.", {
+        position: "top-left",
+      });
+      navigate("/cart");
       return;
     }
+  } catch (error) {
+    console.error("Cart check error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
+    toast.error("Failed to verify cart. Please try again.", {
+      position: "top-left",
+    });
+    return;
+  }
 
-    try {
-      const cartCheck = await axios.get("/api/cart/get", {
-        headers: { "x-session-id": sessionId },
-        withCredentials: true,
-      });
-      if (!cartCheck.data?.items?.length) {
-        toast.error("Cart is empty. Add items to proceed.", { position: "top-left" });
-        navigate("/cart");
+  const orderDetails = {
+    cartId: id,
+    products: orderData.items.map((item) => ({
+      productId: item.productId?._id || item.productId || item.product,
+      title:
+        products[item.productId?._id || item.productId || item.product]?.title ||
+        item.title ||
+        "Untitled",
+      color: item.color || "Not specified",
+      size: item.size || "Not specified",
+      quantity: Number(item.quantity) || 1,
+      price: Number(item.price) || 0,
+      designDescription: item.designDescription,
+      customDesign: item.customDesign,
+    })),
+    totalAmount: orderData.items.reduce(
+      (sum, item) =>
+        sum + Number(item.price || 0) * Number(item.quantity || 1),
+      0
+    ),
+    address,
+    paymentMethod,
+  };
+
+  if (
+    !orderDetails.products.every((item) =>
+      mongoose.Types.ObjectId.isValid(item.productId)
+    )
+  ) {
+    console.error("Invalid productId in orderDetails:", orderDetails.products);
+    toast.error("Invalid product data.", { position: "top-left" });
+    return;
+  }
+  if (
+    !Number.isFinite(orderDetails.totalAmount) ||
+    orderDetails.totalAmount <= 0
+  ) {
+    console.error("Invalid totalAmount:", orderDetails.totalAmount);
+    toast.error("Invalid order amount.", { position: "top-left" });
+    return;
+  }
+  const addr = orderDetails.address;
+  if (
+    !addr.street ||
+    !addr.city ||
+    !addr.state ||
+    !addr.postalCode ||
+    !addr.country
+  ) {
+    console.error("Incomplete address:", orderDetails.address);
+    toast.error("Incomplete address.", { position: "top-left" });
+    return;
+  }
+
+  setPaymentLoading(true);
+
+  try {
+    if (paymentMethod === "Razorpay") {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error("Failed to load payment gateway. Please try again.", {
+          position: "top-left",
+        });
+        setPaymentLoading(false);
         return;
       }
-    } catch (error) {
-      console.error("Cart check error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      toast.error("Failed to verify cart. Please try again.", { position: "top-left" });
-      return;
-    }
 
-    const orderDetails = {
-      cartId: id,
-      products: orderData.items.map((item) => ({
-        productId: item.productId?._id || item.productId || item.product,
-        title: products[item.productId?._id || item.productId || item.product]?.title || item.title || "Untitled",
-        color: item.color || "Not specified",
-        size: item.size || "Not specified",
-        quantity: Number(item.quantity) || 1,
-        price: Number(item.price) || 0,
-        designDescription: item.designDescription,
-        customDesign: item.customDesign,
-      })),
-      totalAmount: orderData.items.reduce(
-        (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
-        0
-      ),
-      address,
-      paymentMethod,
-    };
+      console.log("Razorpay Key ID:", RAZORPAY_KEY_ID);
+      const response = await axios.post(
+        "/api/payment/create-payment",
+        { amount: orderDetails.totalAmount },
+        { headers: { "x-session-id": sessionId }, withCredentials: true }
+      );
 
-    // ADDED: Validate orderDetails before proceeding
-    if (!orderDetails.products.every(item => mongoose.Types.ObjectId.isValid(item.productId))) {
-      console.error("Invalid productId in orderDetails:", orderDetails.products);
-      toast.error("Invalid product data.", { position: "top-left" });
-      return;
-    }
-    if (!Number.isFinite(orderDetails.totalAmount) || orderDetails.totalAmount <= 0) {
-      console.error("Invalid totalAmount:", orderDetails.totalAmount);
-      toast.error("Invalid order amount.", { position: "top-left" });
-      return;
-    }
-    const addr = orderDetails.address;
-    if (!addr.street || !addr.city || !addr.state || !addr.postalCode || !addr.country) {
-      console.error("Incomplete address:", orderDetails.address);
-      toast.error("Incomplete address.", { position: "top-left" });
-      return;
-    }
+      const { orderId } = response.data;
 
-    setPaymentLoading(true);
-
-    try {
-      if (paymentMethod === "Razorpay") {
-        const scriptLoaded = await loadRazorpayScript();
-        if (!scriptLoaded) {
-          toast.error("Failed to load payment gateway. Please try again.", { position: "top-left" });
-          setPaymentLoading(false);
-          return;
-        }
-
-        console.log("Razorpay Key ID:", RAZORPAY_KEY_ID); // ADDED: Debug Razorpay key
-        const response = await axios.post(
-          "/api/payment/create-payment",
-          { amount: orderDetails.totalAmount},
-          { headers: { "x-session-id": sessionId }, withCredentials: true }
-        );
-
-        const { orderId } = response.data;
-
-        const options = {
-          key: RAZORPAY_KEY_ID,
-          amount: orderDetails.totalAmount * 100,
-          currency: "INR",
-          name: "Your Store Name",
-          description: "Order Payment",
-          order_id: orderId,
-          handler: async (response) => {
-            try {
-              console.log("Sending to /api/orders/verify:", { // ADDED: Debug payload
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: orderDetails.totalAmount * 100,
+        currency: "INR",
+        name: "Stitch Design",
+        description: "Order Payment",
+        order_id: orderId,
+        handler: async (response) => {
+          try {
+            console.log("Sending to /api/orders/verify:", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderDetails,
+            });
+            const verifyResponse = await axios.post(
+              "/api/orders/verify",
+              {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 orderDetails,
-              });
-              const verifyResponse = await axios.post(
-                "/api/orders/verify",
-                {
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  orderDetails,
-                },
-                { headers: { "x-session-id": sessionId }, withCredentials: true }
-              );
-              await clearCart();
-              toast.success("Order placed successfully!", { position: "top-left" });
-              navigate(`/myorder`, {
-                state: { order: verifyResponse.data.order },
-              });
-            } catch (err) {
-              console.error("Payment verification error:", err.response?.data || err); // MODIFIED: Improved error logging
-              toast.error(
-                `Payment verification failed: ${err.response?.data?.message || err.message}`,
-                { position: "top-left" }
-              );
-            } finally {
-              setPaymentLoading(false);
-            }
-          },
-          prefill: {
-            name: profile?.name || "",
-            email: profile?.email || "",
-            contact: profile?.mobile || "",
-          },
-          theme: { color: "#2563eb" },
-        };
+              },
+              {
+                headers: { "x-session-id": sessionId },
+                withCredentials: true,
+              }
+            );
+            await clearCart();
+            toast.success("Order placed successfully!", {
+              position: "top-left",
+            });
+            navigate(`/myorder`, {
+              state: { order: verifyResponse.data.order },
+            });
+          } catch (err) {
+            console.error(
+              "Payment verification error:",
+              err.response?.data || err
+            );
+            toast.error(
+              `Payment verification failed: ${
+                err.response?.data?.message || err.message
+              }`,
+              { position: "top-left" }
+            );
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+        prefill: {
+          name: profile?.name || "",
+          email: profile?.email || "",
+          contact: profile?.mobile || "",
+        },
+        theme: { color: "#2563eb" },
+      };
 
-        console.log("Opening Razorpay UI"); // ADDED: Debug UI opening
-        const rzp = new window.Razorpay(options);
-        rzp.on("payment.failed", () => {
-          toast.error("Payment failed. Try again.", { position: "top-left" });
-          setPaymentLoading(false);
-        });
-        rzp.open();
-      } else {
-        console.log("Sending orderDetails to /api/orders:", orderDetails); // ADDED: Debug COD payload
-        const codResponse = await axios.post(
-          "/api/orders",
-          { ...orderDetails, paymentStatus: "done" },
-          { headers: { "x-session-id": sessionId }, withCredentials: true }
-        ).catch((err) => {
-          throw new Error(`COD order creation failed: ${err.response?.data?.message || err.message}`);
-        });
-        await clearCart();
-        toast.success("Order placed successfully!", {
-          position: "top-left",
-        });
-        navigate(`/myorder`, {
-          state: { order: codResponse.data.order },
-        });
-      }
-    } catch (error) {
-      console.error("Order submission error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        url: error.config?.url,
+      console.log("Opening Razorpay UI");
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", () => {
+        toast.error("Payment failed. Try again.", { position: "top-left" });
+        setPaymentLoading(false);
       });
-      toast.error(
-        `Order error: ${paymentMethod} - ${error.response?.data?.message || error.message}`,
-        { position: "top-left" }
-      );
-      setPaymentLoading(false);
+      rzp.open();
+    } else {
+      console.log("Sending orderDetails to /api/orders/cod:", orderDetails);
+      const codResponse = await axios
+        .post(
+          "/api/orders/cod", // ✅ COD route
+          { orderDetails },   // ✅ Wrap orderDetails
+          { headers: { "x-session-id": sessionId }, withCredentials: true }
+        )
+        .catch((err) => {
+          throw new Error(
+            `COD order creation failed: ${
+              err.response?.data?.message || err.message
+            }`
+          );
+        });
+
+      await clearCart();
+      toast.success("COD Order placed successfully!", {
+        position: "top-left",
+      });
+      navigate(`/myorder`, {
+        state: { order: codResponse.data.order },
+      });
     }
-  };
+  } catch (error) {
+    console.error("Order submission error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      url: error.config?.url,
+    });
+    toast.error(
+      `Order error: ${paymentMethod} - ${
+        error.response?.data?.message || error.message
+      }`,
+      { position: "top-left" }
+    );
+    setPaymentLoading(false);
+  }
+};
+
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
@@ -451,9 +529,15 @@ const Order = () => {
                 className="flex items-center gap-4 border-b border-gray-200 py-4"
               >
                 <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-md overflow-hidden">
-                  {products[item.productId?._id || item.productId || item.product]?.images?.[0] ? (
+                  {products[
+                    item.productId?._id || item.productId || item.product
+                  ]?.images?.[0] ? (
                     <img
-                      src={`${BASE_URL}/${products[item.productId._id || item.productId].images[0]}`}
+                      src={getImageUrl(
+                        products[
+                          item.productId?._id || item.productId || item.product
+                        ]?.images?.[0]
+                      )}
                       alt="Product Image"
                       className="object-contain h-full max-w-full transition-transform duration-300 hover:scale-110"
                       onError={(e) => {
@@ -466,10 +550,14 @@ const Order = () => {
                 </div>
                 <div className="flex-1">
                   <Link
-                    to={`/productdetails/${item.productId?._id || item.productId || item.product}`}
+                    to={`/productdetails/${
+                      item.productId?._id || item.productId || item.product
+                    }`} 
                     className="text-lg font-medium text-gray-800 hover:text-blue-600"
                   >
-                    {products[item.productId?._id || item.productId || item.product]?.title ||
+                    {products[
+                      item.productId?._id || item.productId || item.product
+                    ]?.title ||
                       item.title ||
                       "Untitled"}
                   </Link>
@@ -510,7 +598,11 @@ const Order = () => {
             <p className="text-lg font-semibold text-gray-800">
               Total: ₹
               {orderData.items
-                .reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0)
+                .reduce(
+                  (sum, item) =>
+                    sum + Number(item.price || 0) * Number(item.quantity || 1),
+                  0
+                )
                 .toFixed(2)}
             </p>
           </div>
@@ -594,7 +686,11 @@ const Order = () => {
         )}
       </div>
 
-      <ToastContainer position="top-left" autoClose={3000} hideProgressBar={true} />
+      <ToastContainer
+        position="top-left"
+        autoClose={3000}
+        hideProgressBar={true}
+      />
     </div>
   );
 };

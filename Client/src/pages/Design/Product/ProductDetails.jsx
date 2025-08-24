@@ -88,6 +88,10 @@ const ProductDetails = () => {
       toast.error("Please upload a valid image file", { position: "top-left" });
     }
   };
+  const getImageUrl = (image) => {
+    if (!image) return "https://via.placeholder.com/600";
+    return image.startsWith("http") ? image : `${BASE_URL}/${image}`;
+  };
 
   const handleAddToCart = async () => {
     if (!selectedSize || !selectedColor) {
@@ -161,11 +165,7 @@ const ProductDetails = () => {
             <div className="flex flex-col gap-6 md:sticky md:top-24 md:self-start">
               <div className="w-full h-[400px] flex items-center justify-center bg-white rounded-xl overflow-hidden">
                 <img
-                  src={
-                    product.images[currentImageIndex]
-                      ? `${BASE_URL}/${product.images[currentImageIndex]}`
-                      : "https://via.placeholder.com/600"
-                  }
+                  src={getImageUrl(product.images[currentImageIndex])}
                   alt={product.title}
                   className="max-h-full max-w-full object-contain transition-transform duration-300 hover:scale-105"
                   onError={(e) =>
@@ -178,7 +178,7 @@ const ProductDetails = () => {
                 {product.images.map((image, index) => (
                   <img
                     key={index}
-                    src={`${BASE_URL}/${image}`}
+                    src={getImageUrl(image)}
                     alt={`Thumb ${index}`}
                     onClick={() => setCurrentImageIndex(index)}
                     className={`w-20 h-20 object-contain rounded-lg cursor-pointer border ${
@@ -191,6 +191,7 @@ const ProductDetails = () => {
                     }
                   />
                 ))}
+
                 {uploadedImage && (
                   <img
                     src={uploadedImage}
@@ -224,7 +225,9 @@ const ProductDetails = () => {
                   <p className="text-xl text-gray-500 line-through">
                     ₹{(product.price * 1.2).toFixed(2)}
                   </p>
-                  <p className="text-xl text-red-600 font-semibold">{product.discount}% OFF</p>
+                  <p className="text-xl text-red-600 font-semibold">
+                    {product.discount}% OFF
+                  </p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -420,7 +423,11 @@ const ProductDetails = () => {
           </>
         )}
 
-        <ToastContainer position="top-left" autoClose={2000}  hideProgressBar={true} />
+        <ToastContainer
+          position="top-left"
+          autoClose={2000}
+          hideProgressBar={true}
+        />
       </div>
     </section>
   );

@@ -4,29 +4,24 @@ import { useAuth } from "../../../AuthContext/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import OrderDesign from "./OrderDesign";
-import ShippedDetails from "./ShippedDetails";
 
-const AllOrder = () => {
+const CompletedOrder = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [selectedShippedId, setSelectedShippedId] = useState(null);
+  const [modalData, setModalData] = useState(null); // State for modal
 
   const navigate = useNavigate();
-
-  const CLOUDINARY_BASE_URL =
-    "https://res.cloudinary.com/dopqalob9/image/upload";
+  const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/dopqalob9/image/upload";
 
   // Status flow in order
   const statusSteps = ["processing", "design", "shipped", "delivered"];
 
   const fetchOrdersAndProducts = async () => {
     try {
-      const response = await AxiosInstance.get("/api/orders", {
+      const response = await AxiosInstance.get("/api/orders/completed", {
         withCredentials: true,
         headers: {
           "x-session-id":
@@ -35,16 +30,19 @@ const AllOrder = () => {
         },
       });
       const ordersData = Array.isArray(response.data) ? response.data : [];
-      const validOrders = ordersData.filter(
+      // Filter only orders with "completed" or "delivered" status
+      const completedOrders = ordersData.filter(
         (order) =>
           order._id &&
           typeof order._id === "string" &&
-          order.status?.toLowerCase() !== "completed"
+          ["completed", "delivered"].includes(order.status?.toLowerCase())
       );
-      setOrders(validOrders);
+      setOrders(completedOrders);
+
+      // Fetch product details for the filtered orders
       const productIds = [
         ...new Set(
-          validOrders.flatMap((order) =>
+          completedOrders.flatMap((order) =>
             order.products.map((item) =>
               typeof item.product === "object" && item.product?._id
                 ? item.product._id.toString()
@@ -91,11 +89,8 @@ const AllOrder = () => {
   }, [isAuthenticated, authLoading, navigate]);
 
   const statusStyles = {
-    pending: "bg-yellow-100 text-yellow-800",
-    design: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
+    completed: "bg-green-100 text-green-800",
     delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
   };
 
   const getExpectedArrival = (createdAt) => {
@@ -106,16 +101,6 @@ const AllOrder = () => {
       month: "short",
       year: "numeric",
     });
-  };
-
-  const openModal = (orderId) => {
-    setSelectedOrderId(orderId);
-  };
-
-  const closeModal = () => {
-    setSelectedOrderId(null);
-    setSelectedShippedId(null);
-    fetchOrdersAndProducts();
   };
 
   if (authLoading || loading) {
@@ -137,7 +122,7 @@ const AllOrder = () => {
   if (orders.length === 0) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-600 text-base">No orders found.</p>
+        <p className="text-gray-600 text-base">No completed orders found.</p>
       </div>
     );
   }
@@ -145,13 +130,11 @@ const AllOrder = () => {
   return (
     <div className="container mx-auto p-4 max-w-6xl bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
       <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">
-        All Orders
+        Completed Orders
       </h1>
       <div className="space-y-6">
         {orders.map((order) => {
-          const currentStepIndex = statusSteps.indexOf(
-            order.status.toLowerCase()
-          );
+          const currentStepIndex = statusSteps.indexOf("delivered"); // Set to "delivered" as completed implies delivery
 
           return (
             <div
@@ -183,10 +166,10 @@ const AllOrder = () => {
                 </span>
               </div>
 
-              {/* Progress bar */}
+              {/* Progress Bar and Modal */}
               <div className="relative mb-6">
                 <div className="text-xs text-gray-500 font-medium mb-1">
-                  Expected Arrival: {getExpectedArrival(order.createdAt)}
+                  Delivered on: {getExpectedArrival(order.createdAt)}
                 </div>
                 <div className="flex items-center">
                   <div className="w-full h-2 bg-gray-200 rounded-full relative overflow-hidden">
@@ -201,27 +184,91 @@ const AllOrder = () => {
                   </div>
                 </div>
 
+                {/* Modal for Proof Images */}
+                {modalData && modalData.image && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg relative max-w-lg">
+                      <button
+                        onClick={() => setModalData(null)}
+                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold"
+                      >
+                        ✖
+                      </button>
+                      <img
+                        src={
+                          modalData.image?.startsWith("http")
+                            ? modalData.image
+                            : `${CLOUDINARY_BASE_URL}/${modalData.image}`
+                        }
+                        alt="Proof"
+                        className="w-full h-auto rounded-md"
+                        onError={(e) =>
+                          (e.target.src = "https://via.placeholder.com/150")
+                        }
+                      />
+                      <p className="mt-2 text-center font-medium text-gray-700">
+                        {modalData.label}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Steps */}
                 <div className="flex justify-between items-center mt-2 text-[10px] sm:text-xs">
                   {[
                     { icon: "📋", label: "Processed" },
-                    { icon: "💻", label: "Designing" },
-                    { icon: "📦", label: "Shipped" },
-                    { icon: "🏠", label: "Arrived" },
-                  ].map((step, index) => (
-                    <div key={index} className="flex flex-col items-center">
+                    {
+                      icon: "💻",
+                      label: "Design Proof",
+                      proofKey: "designProofImage",
+                    },
+                    {
+                      icon: "📦",
+                      label: "Shipping Proof",
+                      proofKey: "shippingSlipImage",
+                    },
+                    {
+                      icon: "🏠",
+                      label: "Delivered Proof",
+                      proofKey: "deliveredImage",
+                    },
+                  ].map((step, index) => {
+                    // Check if any product in the order has the proof image
+                    const hasProof = order.products.some(
+                      (item) => item[step.proofKey]
+                    );
+                    return (
                       <div
-                        className={`w-7 h-7 sm:w-8 sm:h-8 cursor-pointer rounded-full flex items-center justify-center text-sm sm:text-base ${
-                          index <= currentStepIndex
-                            ? "bg-purple-500 text-white scale-110"
-                            : "bg-gray-200 text-gray-400"
-                        } transition-all duration-500`}
+                        key={index}
+                        className="flex flex-col items-center cursor-pointer group"
+                        onClick={() => {
+                          if (hasProof) {
+                            // Use the first product's proof image
+                            const proofImage = order.products.find(
+                              (item) => item[step.proofKey]
+                            )[step.proofKey];
+                            setModalData({
+                              image: proofImage,
+                              label: step.label,
+                            });
+                          }
+                        }}
                       >
-                        {step.icon}
+                        <div
+                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm sm:text-base ${
+                            hasProof
+                              ? "bg-purple-500 text-white scale-110 shadow-lg group-hover:scale-125"
+                              : index <= currentStepIndex
+                              ? "bg-purple-500 text-white scale-110"
+                              : "bg-gray-200 text-gray-400"
+                          } transition-all duration-500`}
+                        >
+                          {step.icon}
+                        </div>
+                        <p className="mt-1 text-gray-600">{step.label}</p>
                       </div>
-                      <p className="mt-1 text-gray-600">{step.label}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -287,6 +334,12 @@ const AllOrder = () => {
                                 <span className="font-medium">Price:</span> ₹
                                 {item.price.toFixed(2)}
                               </p>
+                              {item.rating && (
+                                <p className="text-xs text-gray-600">
+                                  <span className="font-medium">Rating:</span>{" "}
+                                  {item.rating} Star{item.rating > 1 ? "s" : ""}
+                                </p>
+                              )}
                             </div>
                             <div className="flex-shrink-0">
                               {item.customDesign ? (
@@ -298,10 +351,10 @@ const AllOrder = () => {
                                   }
                                   alt="Custom Design"
                                   className="w-20 h-20 object-cover rounded-lg"
-                                  onError={(e) => {
-                                    e.target.src =
-                                      "https://via.placeholder.com/150";
-                                  }}
+                                  onError={(e) =>
+                                    (e.target.src =
+                                      "https://via.placeholder.com/150")
+                                  }
                                 />
                               ) : (
                                 <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-xs">
@@ -366,69 +419,12 @@ const AllOrder = () => {
                       order.paymentStatus.slice(1)}
                   </p>
                 </div>
-
-                <div className="flex gap-3">
-                  {/* Design Button */}
-                  <button
-                    className={`px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform 
-                     ${
-                       order.status.toLowerCase() === "design" ||
-                       order.status.toLowerCase() === "shipped" ||
-                       order.status.toLowerCase() === "delivered"
-                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                         : "bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white hover:scale-105"
-                     }`}
-                    disabled={
-                      order.status.toLowerCase() === "design" ||
-                      order.status.toLowerCase() === "shipped" ||
-                      order.status.toLowerCase() === "delivered"
-                    }
-                    onClick={() => openModal(order._id)}
-                  >
-                    Design
-                  </button>
-
-                  {/* Shipped Button */}
-                  <button
-                    className={`px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform 
-                      ${
-                        order.status.toLowerCase() === "shipped" ||
-                        order.status.toLowerCase() === "delivered"
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white hover:scale-105"
-                      }`}
-                    disabled={
-                      order.status.toLowerCase() === "shipped" ||
-                      order.status.toLowerCase() === "delivered"
-                    }
-                    onClick={() => setSelectedShippedId(order._id)}
-                  >
-                    Shipped
-                  </button>
-                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Modal */}
-      {selectedOrderId && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
-            <OrderDesign orderId={selectedOrderId} onClose={closeModal} />
-          </div>
-        </div>
-      )}
-
-      {/* Shipped Modal */}
-      {selectedShippedId && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
-            <ShippedDetails orderId={selectedShippedId} onClose={closeModal} />
-          </div>
-        </div>
-      )}
       <ToastContainer
         position="bottom-left"
         autoClose={2000}
@@ -438,4 +434,4 @@ const AllOrder = () => {
   );
 };
 
-export default AllOrder;
+export default CompletedOrder;

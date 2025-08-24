@@ -3,7 +3,7 @@ import Order from "../models/Order.js";
 import cloudinary from "../utils/cloudinary.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
-
+import Product from "../models/Product.js";
 
 /**
  * Upload Design Proof Image
@@ -45,7 +45,6 @@ export const uploadDesignProofImage = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 
 /**
  * Verify Razorpay Payment
@@ -122,6 +121,55 @@ export const verifyPayment = async (req, res) => {
       message: "Failed to verify payment or clear cart",
       error: err.message,
     });
+  }
+};
+
+/**
+ * Create Order with Cash on Delivery (COD)
+ */
+export const createCODOrder = async (req, res) => {
+  try {
+    const { orderDetails } = req.body;
+    if (!orderDetails) {
+      return res.status(400).json({ message: "Order details are required" });
+    }
+
+    const order = new Order({
+      user: req.user?._id || null,
+      products: orderDetails.products.map((item) => ({
+        product: item.productId,
+        title: item.title || "Untitled",
+        color: item.color,
+        size: item.size,
+        quantity: item.quantity,
+        price: item.price,
+        designDescription: item.designDescription,
+        customDesign: item.customDesign,
+      })),
+      totalAmount: orderDetails.totalAmount,
+      address: orderDetails.address,
+      paymentMethod: "Cash on Delivery",
+      paymentStatus: "pending", // COD is paid later
+    });
+
+    await order.save();
+
+    // clear cart
+    const sessionId = req.headers["x-session-id"];
+    const userId = req.user?._id;
+    let cart =
+      (await Cart.findOne({ userId })) ||
+      (sessionId ? await Cart.findOne({ sessionId }) : null);
+
+    if (cart) {
+      cart.items = [];
+      await cart.save();
+    }
+
+    res.status(201).json({ message: "COD order created", order });
+  } catch (err) {
+    console.error("COD Order Error:", err.message);
+    res.status(500).json({ message: "Failed to create COD order" });
   }
 };
 
@@ -213,17 +261,24 @@ export const getOrderById = async (req, res) => {
 export const getAllOrders = async (req, res) => {
   try {
     if (req.user.role !== "admin") {
-      const orders = await Order.find({ user: req.user._id })
+      // Users see only non-completed orders
+      const orders = await Order.find({
+        user: req.user._id,
+        status: { $ne: "completed" },
+      })
         .populate("user", "name email")
         .populate("products.product")
         .sort({ createdAt: -1 });
+
       return res.status(200).json(orders);
     }
 
+    // Admins see all orders including completed
     const orders = await Order.find()
       .populate("user", "name email")
       .populate("products.product")
       .sort({ createdAt: -1 });
+
     res.status(200).json(orders);
   } catch (err) {
     console.error("Get all orders error:", err.message);
@@ -284,57 +339,21 @@ export const uploadDeliveredImage = async (req, res) => {
     );
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Save Cloudinary URL
+    // Save image + update status
     product.deliveredImage = file.path;
+
+    // ✅ Auto change order status to delivered
+    order.status = "delivered";
+
     await order.save();
 
-    res
-      .status(200)
-      .json({ message: "Delivered image uploaded", deliveredImage: file.path });
+    res.status(200).json({
+      message: "Delivered image uploaded and order marked as delivered",
+      deliveredImage: file.path,
+      orderStatus: order.status,
+    });
   } catch (err) {
     console.error("Upload delivered image error:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
-
-/**
- * Confirm Delivered Image
- * - Admin approves or rejects the delivered image
- * - Updates product.deliveredImageStatus
- */
-export const confirmDeliveredImage = async (req, res) => {
-  try {
-    const { orderId, productId } = req.params;
-    const { status } = req.body;
-
-    if (req.user.role !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized: Admin access required" });
-    }
-
-    if (!["confirmed", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    const product = order.products.find(
-      (item) => item.product.toString() === productId
-    );
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    if (!product.deliveredImage) {
-      return res.status(400).json({ message: "No delivered image to confirm" });
-    }
-
-    product.deliveredImageStatus = status;
-    await order.save();
-
-    res.status(200).json({ message: `Delivered image ${status}`, order });
-  } catch (err) {
-    console.error("Confirm delivered image error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -357,25 +376,46 @@ export const rateProduct = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    const product = order.products.find(
+    const productInOrder = order.products.find(
       (item) => item.product.toString() === productId
     );
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!productInOrder) {
+      return res.status(404).json({ message: "Product not found in order" });
+    }
 
-    if (product.deliveredImageStatus !== "confirmed") {
+    if (productInOrder.rating) {
       return res
         .status(400)
-        .json({ message: "Delivered image must be confirmed before rating" });
+        .json({ message: "Product already rated in this order" });
     }
 
-    if (product.rating) {
-      return res.status(400).json({ message: "Product already rated" });
+    // Save rating in order
+    productInOrder.rating = rating;
+
+    // ✅ Update global product rating
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found in database" });
     }
 
-    product.rating = rating;
+    const currentAvg = product.rating.average || 0;
+    const currentCount = product.rating.count || 0;
+    const newCount = currentCount + 1;
+    const newAvg = (currentAvg * currentCount + rating) / newCount;
+
+    product.rating.average = newAvg;
+    product.rating.count = newCount;
+
+    await product.save();
+
+    // ✅ Mark order as completed instead of deleting
+    order.status = "completed";
     await order.save();
 
-    res.status(200).json({ message: "Rating submitted", rating });
+    res.status(200).json({
+      message: "Rating submitted. Order marked as completed.",
+      productRating: product.rating,
+    });
   } catch (err) {
     console.error("Rate product error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -409,14 +449,111 @@ export const uploadShippingSlipImage = async (req, res) => {
 
     // Save Cloudinary URL
     product.shippingSlipImage = file.path;
+
+    // Update order status to "shipped" if not already
+    order.status = "shipped";
+
     await order.save();
 
     res.status(200).json({
-      message: "Shipping slip uploaded",
+      message: "Shipping slip uploaded and order status updated to shipped",
       shippingSlipImage: file.path,
+      orderStatus: order.status,
     });
   } catch (err) {
     console.error("Upload shipping slip error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+// GET /api/orders/completed
+export const getCompletedOrders = async (req, res) => {
+  try {
+    if (!req.user) {
+      console.log("⚠️ No user in request");
+      return res.status(401).json({ message: "Unauthorized - please log in" });
+    }
+
+    console.log("✅ User found:", req.user);
+
+    let query = { status: { $in: ["delivered", "completed"] } };
+
+    if (req.user.role !== "admin") {
+      query.user = req.user._id;
+    }
+
+    console.log("🔍 Completed Orders Query:", query);
+
+    const orders = await Order.find(query)
+      .populate("user", "name email")
+      .populate({
+        path: "products.product",
+        model: "Product",
+        options: { strictPopulate: false },
+      })
+      .sort({ createdAt: -1 });
+
+    console.log("✅ Orders fetched:", orders.length);
+
+    res.status(200).json(orders);
+  } catch (err) {
+    console.error("❌ Get completed orders error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+
+// PUT /api/orders/:orderId/cancel
+export const cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // Only allow cancel if order is still processing/design stage
+    if (!["processing", "design"].includes(order.status)) {
+      return res
+        .status(400)
+        .json({ message: "Order cannot be cancelled at this stage" });
+    }
+
+    order.status = "Cancel";
+    await order.save();
+
+    res.status(200).json({ message: "Order cancelled successfully", order });
+  } catch (err) {
+    console.error("Cancel order error:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+
+
+// GET /api/orders/cancelled
+export const getCancelledOrders = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized - please log in" });
+    }
+
+    let query = { status: "cancel" };
+
+    // Normal users can see only their own cancelled orders
+    if (req.user.role !== "admin") {
+      query.user = req.user._id;
+    }
+
+    const orders = await Order.find(query)
+      .populate("user", "name email phone")
+      .populate("products.product")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+

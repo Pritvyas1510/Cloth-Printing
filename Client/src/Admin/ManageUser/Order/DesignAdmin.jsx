@@ -5,23 +5,21 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OrderDesign from "./OrderDesign";
-import ShippedDetails from "./ShippedDetails";
 
-const AllOrder = () => {
+const DesignAdmin = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [selectedShippedId, setSelectedShippedId] = useState(null);
 
   const navigate = useNavigate();
 
   const CLOUDINARY_BASE_URL =
     "https://res.cloudinary.com/dopqalob9/image/upload";
 
-  // Status flow in order
+  // Status flow
   const statusSteps = ["processing", "design", "shipped", "delivered"];
 
   const fetchOrdersAndProducts = async () => {
@@ -34,17 +32,21 @@ const AllOrder = () => {
             `guest_${Math.random().toString(36).substr(2, 9)}`,
         },
       });
+
       const ordersData = Array.isArray(response.data) ? response.data : [];
-      const validOrders = ordersData.filter(
+      const designOrders = ordersData.filter(
         (order) =>
           order._id &&
           typeof order._id === "string" &&
-          order.status?.toLowerCase() !== "completed"
+          order.status?.toLowerCase() === "processing"
       );
-      setOrders(validOrders);
+
+      setOrders(designOrders);
+
+      // collect product ids
       const productIds = [
         ...new Set(
-          validOrders.flatMap((order) =>
+          designOrders.flatMap((order) =>
             order.products.map((item) =>
               typeof item.product === "object" && item.product?._id
                 ? item.product._id.toString()
@@ -58,6 +60,7 @@ const AllOrder = () => {
         AxiosInstance.get(`/api/products/${id}`).catch(() => ({ data: null }))
       );
       const productResponses = await Promise.all(productPromises);
+
       const productMap = {};
       productResponses.forEach((res) => {
         if (res.data) {
@@ -65,6 +68,7 @@ const AllOrder = () => {
         }
       });
       setProducts(productMap);
+
       setLoading(false);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch orders");
@@ -78,7 +82,6 @@ const AllOrder = () => {
 
   useEffect(() => {
     if (authLoading) return;
-
     if (!isAuthenticated) {
       toast.error("Please log in to view orders", { position: "top-left" });
       setError("Please log in to view orders");
@@ -86,16 +89,11 @@ const AllOrder = () => {
       navigate("/login");
       return;
     }
-
     fetchOrdersAndProducts();
   }, [isAuthenticated, authLoading, navigate]);
 
   const statusStyles = {
-    pending: "bg-yellow-100 text-yellow-800",
     design: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
   };
 
   const getExpectedArrival = (createdAt) => {
@@ -108,13 +106,9 @@ const AllOrder = () => {
     });
   };
 
-  const openModal = (orderId) => {
-    setSelectedOrderId(orderId);
-  };
-
+  const openModal = (orderId) => setSelectedOrderId(orderId);
   const closeModal = () => {
     setSelectedOrderId(null);
-    setSelectedShippedId(null);
     fetchOrdersAndProducts();
   };
 
@@ -137,7 +131,9 @@ const AllOrder = () => {
   if (orders.length === 0) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-600 text-base">No orders found.</p>
+        <p className="text-gray-600 text-base">
+          No orders in design stage found.
+        </p>
       </div>
     );
   }
@@ -145,7 +141,7 @@ const AllOrder = () => {
   return (
     <div className="container mx-auto p-4 max-w-6xl bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
       <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">
-        All Orders
+        Order Design
       </h1>
       <div className="space-y-6">
         {orders.map((order) => {
@@ -162,7 +158,7 @@ const AllOrder = () => {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-800 tracking-wide">
-                    Order #{order._id.slice(-6)}
+                    Order {order._id.slice(10)}
                   </h2>
                   <p className="text-xs text-gray-500">
                     Placed on:{" "}
@@ -199,29 +195,6 @@ const AllOrder = () => {
                       }}
                     ></div>
                   </div>
-                </div>
-
-                {/* Steps */}
-                <div className="flex justify-between items-center mt-2 text-[10px] sm:text-xs">
-                  {[
-                    { icon: "📋", label: "Processed" },
-                    { icon: "💻", label: "Designing" },
-                    { icon: "📦", label: "Shipped" },
-                    { icon: "🏠", label: "Arrived" },
-                  ].map((step, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div
-                        className={`w-7 h-7 sm:w-8 sm:h-8 cursor-pointer rounded-full flex items-center justify-center text-sm sm:text-base ${
-                          index <= currentStepIndex
-                            ? "bg-purple-500 text-white scale-110"
-                            : "bg-gray-200 text-gray-400"
-                        } transition-all duration-500`}
-                      >
-                        {step.icon}
-                      </div>
-                      <p className="mt-1 text-gray-600">{step.label}</p>
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -347,65 +320,30 @@ const AllOrder = () => {
               </div>
 
               {/* Footer */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t pt-3 mt-3 gap-3">
-                <div className="space-y-1 text-sm">
-                  <p className="text-gray-600">
-                    <span className="font-medium">Total Amount:</span>{" "}
+              <div className="flex justify-between items-center border-t pt-3 mt-3">
+                <div className="text-sm text-gray-600">
+                  <p>
+                    <span className="font-medium">Total:</span>{" "}
                     {new Intl.NumberFormat("en-IN", {
                       style: "currency",
                       currency: "INR",
                     }).format(order.totalAmount)}
                   </p>
-                  <p className="text-gray-600">
-                    <span className="font-medium">Payment Method:</span>{" "}
+                  <p>
+                    <span className="font-medium">Payment:</span>{" "}
                     {order.paymentMethod}
                   </p>
-                  <p className="text-gray-600">
-                    <span className="font-medium">Payment Status:</span>{" "}
-                    {order.paymentStatus.charAt(0).toUpperCase() +
-                      order.paymentStatus.slice(1)}
+                  <p>
+                    <span className="font-medium">Status:</span>{" "}
+                    {order.paymentStatus}
                   </p>
                 </div>
-
-                <div className="flex gap-3">
-                  {/* Design Button */}
-                  <button
-                    className={`px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform 
-                     ${
-                       order.status.toLowerCase() === "design" ||
-                       order.status.toLowerCase() === "shipped" ||
-                       order.status.toLowerCase() === "delivered"
-                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                         : "bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white hover:scale-105"
-                     }`}
-                    disabled={
-                      order.status.toLowerCase() === "design" ||
-                      order.status.toLowerCase() === "shipped" ||
-                      order.status.toLowerCase() === "delivered"
-                    }
-                    onClick={() => openModal(order._id)}
-                  >
-                    Design
-                  </button>
-
-                  {/* Shipped Button */}
-                  <button
-                    className={`px-4 py-2 rounded-xl shadow-md text-sm transition-transform transform 
-                      ${
-                        order.status.toLowerCase() === "shipped" ||
-                        order.status.toLowerCase() === "delivered"
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white hover:scale-105"
-                      }`}
-                    disabled={
-                      order.status.toLowerCase() === "shipped" ||
-                      order.status.toLowerCase() === "delivered"
-                    }
-                    onClick={() => setSelectedShippedId(order._id)}
-                  >
-                    Shipped
-                  </button>
-                </div>
+                <button
+                  className="px-4 py-2 rounded-xl shadow-md text-sm bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:scale-105"
+                  onClick={() => openModal(order._id)}
+                >
+                  Design
+                </button>
               </div>
             </div>
           );
@@ -414,28 +352,16 @@ const AllOrder = () => {
 
       {/* Modal */}
       {selectedOrderId && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
             <OrderDesign orderId={selectedOrderId} onClose={closeModal} />
           </div>
         </div>
       )}
 
-      {/* Shipped Modal */}
-      {selectedShippedId && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
-            <ShippedDetails orderId={selectedShippedId} onClose={closeModal} />
-          </div>
-        </div>
-      )}
-      <ToastContainer
-        position="bottom-left"
-        autoClose={2000}
-        hideProgressBar={true}
-      />
+      <ToastContainer position="bottom-left" autoClose={2000} hideProgressBar />
     </div>
   );
 };
 
-export default AllOrder;
+export default DesignAdmin;

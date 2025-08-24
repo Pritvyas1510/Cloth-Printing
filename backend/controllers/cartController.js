@@ -34,7 +34,7 @@ export const addToCart = async (req, res) => {
     if (req.file && req.file.mimetype.startsWith("image/")) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { folder: "custom_designs", timeout: 30000 },
+          { folder: "Cloth_Printing", timeout: 30000 },
           (error, result) => (error ? reject(error) : resolve(result.public_id))
         );
         const bufferStream = new Readable();

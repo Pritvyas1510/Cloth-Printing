@@ -34,7 +34,7 @@ const ManageProduct = () => {
   };
 
   // Base URL for images
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
 
   // Fetch all products
   useEffect(() => {
@@ -98,7 +98,7 @@ const ManageProduct = () => {
                   <img
                     src={
                       product.images[0]
-                        ? `${BASE_URL}/${product.images[0]}`
+                        ? product.images[0] // already Cloudinary secure_url
                         : "https://via.placeholder.com/200"
                     }
                     alt={product.title}
@@ -107,6 +107,7 @@ const ManageProduct = () => {
                       (e.target.src = "https://via.placeholder.com/200")
                     }
                   />
+
                   <div className="absolute inset-0 bg-gradient-to-t from-gray-100/30 to-transparent rounded-lg"></div>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -114,11 +115,14 @@ const ManageProduct = () => {
                 </h3>
                 <p className="text-gray-600 mb-2">
                   <strong>Price:</strong> ₹{product.price.toFixed(2)}
-                    <sup>  {product.discount > 0 && (
+                  <sup>
+                    {" "}
+                    {product.discount > 0 && (
                       <span className="ml-2 bg-red-100 text-md text-red-600 font-bold px-2 rounded-3xl">
                         {product.discount}%
-                      </span>)}</sup>
-                  
+                      </span>
+                    )}
+                  </sup>
                 </p>
                 <p className="text-gray-600 mb-2">
                   <strong>Sizes:</strong> {product.size.join(", ") || "None"}

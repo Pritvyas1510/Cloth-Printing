@@ -3,7 +3,7 @@ import AxiosInstance from "../../../Axios/AxiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const OrderDesign = ({ orderId, onClose }) => {
+const ShippedDetails = ({ orderId, onClose }) => {
   const [order, setOrder] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [product, setProduct] = useState(null);
@@ -55,7 +55,17 @@ const OrderDesign = ({ orderId, onClose }) => {
           setProduct({
             ...firstProduct,
             additionalDetails: productResponse.data || {},
+            shippedProof: firstProduct.shippedProof || null,
+            designProof: firstProduct.designProof || null, // Added designProof
           });
+
+          if (firstProduct.shippedProof) {
+            setImagePreview(
+              firstProduct.shippedProof.startsWith("http")
+                ? firstProduct.shippedProof
+                : `${CLOUDINARY_BASE_URL}/${firstProduct.shippedProof}`
+            );
+          }
         }
         setLoading(false);
       } catch (err) {
@@ -67,7 +77,6 @@ const OrderDesign = ({ orderId, onClose }) => {
     fetchOrderAndProduct();
   }, [orderId]);
 
-  // Upload image change
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -89,35 +98,45 @@ const OrderDesign = ({ orderId, onClose }) => {
     setImagePreview(null);
   };
 
-  // Submit design
-  const handleSubmit = async () => {
-    if (!imageFile || !selectedProductId) {
-      return toast.error("Please select product & upload an image");
-    }
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("designProofImage", imageFile);
+  // Submit shipped proof (shipping slip)
+const handleSubmit = async () => {
+  if (!imageFile || !selectedProductId) {
+    return toast.error("Please select product & upload an image");
+  }
+  setUploading(true);
+  try {
+    const formData = new FormData();
+    formData.append("shippingSlipImage", imageFile); // match backend field name
 
-      await AxiosInstance.post(
-        `/api/orders/${orderId}/product/${selectedProductId}/upload-design`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+    // Call backend upload API
+    await AxiosInstance.post(
+      `/api/orders/${orderId}/product/${selectedProductId}/upload-shipping`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-      toast.success("Design proof uploaded successfully");
-      setTimeout(onClose, 2000);
-    } catch (err) {
-      toast.error("Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
+    toast.success("Shipping slip uploaded successfully");
+
+    // Update local state to show the uploaded image immediately
+    setProduct((prev) => ({
+      ...prev,
+      shippingSlipImage: URL.createObjectURL(imageFile),
+    }));
+
+    setTimeout(onClose, 2000);
+  } catch (err) {
+    console.error(err);
+    toast.error("Upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -128,9 +147,9 @@ const OrderDesign = ({ orderId, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-100 flex items-center justify-center z-50 p-4 font-sans">
-      <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl p-6">
-        {/* Close button */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto bg-gray-100">
+      <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl p-6 min-h-[80vh] max-h-[90vh] overflow-y-auto">
+        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition"
@@ -138,28 +157,23 @@ const OrderDesign = ({ orderId, onClose }) => {
           ✕
         </button>
 
-        {/* Title */}
         <h1 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-          Design Proof – Order {order._id.slice(10)}
+          Shipped Proof – Order {order._id.slice(10)}
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: Product & Order Summary */}
           <div className="space-y-4">
-            {/* Product details */}
             {product && (
               <div className="border rounded-lg p-4 bg-gray-50 shadow-sm">
                 <div className="grid grid-cols-3 gap-4">
-                  {/* Product image */}
                   <div className="col-span-1">
                     {product.additionalDetails?.images?.[0] ? (
                       <img
                         src={
-                          product.additionalDetails?.images?.[0]?.startsWith(
-                            "http"
-                          )
-                            ? product.additionalDetails.images[0] // Cloudinary URL
-                            : `${BASE_URL}/${product.additionalDetails.images[0]}` // local path
+                          product.additionalDetails.images[0].startsWith("http")
+                            ? product.additionalDetails.images[0]
+                            : `${BASE_URL}/${product.additionalDetails.images[0]}`
                         }
                         alt={product.title}
                         className="w-20 object-cover rounded-md border"
@@ -170,48 +184,28 @@ const OrderDesign = ({ orderId, onClose }) => {
                       </div>
                     )}
                   </div>
-
-                  {/* Product Info + Design */}
                   <div className="col-span-2 flex flex-row justify-between">
-                    {/* Product Info */}
                     <div className="text-sm text-gray-700 space-y-1">
                       <h2 className="text-base font-semibold text-gray-800">
                         {product.title}
                       </h2>
-                      <p>
-                        <span className="font-medium">Color:</span>{" "}
-                        {product.color}
-                      </p>
-                      <p>
-                        <span className="font-medium">Size:</span>{" "}
-                        {product.size}
-                      </p>
-                      <p>
-                        <span className="font-medium">Quantity:</span>{" "}
-                        {product.quantity}
-                      </p>
-                      <p>
-                        <span className="font-medium">Price:</span> ₹
-                        {product.price}
-                      </p>
+                      <p><span className="font-medium">Color:</span> {product.color}</p>
+                      <p><span className="font-medium">Size:</span> {product.size}</p>
+                      <p><span className="font-medium">Quantity:</span> {product.quantity}</p>
+                      <p><span className="font-medium">Price:</span> ₹{product.price}</p>
                       {product.designDescription && (
                         <p className="text-xs">
-                          <span className="font-medium">Description:</span>{" "}
-                          {product.designDescription}
+                          <span className="font-medium">Description:</span> {product.designDescription}
                         </p>
                       )}
                     </div>
-
-                    {/* Design Image */}
-                    {product.customDesign && (
+                    {product.shippedProof && (
                       <div className="mt-3">
                         <img
-                          src={
-                            product.customDesign.startsWith("http")
-                              ? product.customDesign
-                              : `${CLOUDINARY_BASE_URL}/${product.customDesign}`
-                          }
-                          alt="Custom Design"
+                          src={product.shippedProof.startsWith("http")
+                            ? product.shippedProof
+                            : `${CLOUDINARY_BASE_URL}/${product.shippedProof}`}
+                          alt="Shipped Proof"
                           className="w-20 h-20 object-cover rounded-md border"
                         />
                       </div>
@@ -225,39 +219,25 @@ const OrderDesign = ({ orderId, onClose }) => {
             <div className="border rounded-lg p-4 bg-gray-50 shadow-sm text-sm text-gray-700">
               <h3 className="text-base font-semibold mb-2">Order Summary</h3>
               <div className="grid grid-cols-2 gap-y-1">
-                <p>
-                  <span className="font-medium">Order ID:</span>{" "}
-                  {order._id.slice(-6)}
-                </p>
-                <p>
-                  <span className="font-medium">Placed on:</span>{" "}
-                  {new Date(order.createdAt).toLocaleDateString("en-IN")}
-                </p>
-                <p>
-                  <span className="font-medium">Total:</span> ₹
-                  {order.totalAmount}
-                </p>
-                <p>
-                  <span className="font-medium">Payment:</span>{" "}
-                  {order.paymentMethod} ({order.paymentStatus})
-                </p>
+                <p><span className="font-medium">Order ID:</span> {order._id.slice(-6)}</p>
+                <p><span className="font-medium">Placed on:</span> {new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
+                <p><span className="font-medium">Total:</span> ₹{order.totalAmount}</p>
+                <p><span className="font-medium">Payment:</span> {order.paymentMethod} ({order.paymentStatus})</p>
               </div>
+
+              
             </div>
           </div>
 
           {/* Right: Upload area */}
           <div className="border rounded-lg p-4 bg-gray-50 shadow-sm">
-            <h3 className="text-base font-semibold mb-3">
-              Upload Design Proof
-            </h3>
+            <h3 className="text-base font-semibold mb-3">Upload Shipped Proof</h3>
             {!imagePreview ? (
               <label
                 htmlFor="image-upload"
                 className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-blue-600 hover:bg-blue-50 transition h-48"
               >
-                <p className="text-gray-500 text-sm font-medium">
-                  Drag & drop or click to upload
-                </p>
+                <p className="text-gray-500 text-sm font-medium">Drag & drop or click to upload</p>
                 <p className="text-xs text-gray-400 mt-1">JPG, PNG (Max 5MB)</p>
                 <input
                   type="file"
@@ -281,7 +261,7 @@ const OrderDesign = ({ orderId, onClose }) => {
                   ✕
                 </button>
                 <p className="mt-2 text-center text-xs text-gray-600">
-                  {imageFile.name} ({(imageFile.size / 1024).toFixed(1)} KB)
+                  {imageFile?.name} ({(imageFile?.size / 1024).toFixed(1)} KB)
                 </p>
               </div>
             )}
@@ -301,7 +281,7 @@ const OrderDesign = ({ orderId, onClose }) => {
             disabled={uploading || !imageFile}
             className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition"
           >
-            {uploading ? "Uploading..." : "Submit Design"}
+            {uploading ? "Uploading..." : "Submit Proof"}
           </button>
         </div>
 
@@ -311,4 +291,4 @@ const OrderDesign = ({ orderId, onClose }) => {
   );
 };
 
-export default OrderDesign;
+export default ShippedDetails;

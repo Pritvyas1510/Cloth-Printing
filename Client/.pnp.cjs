@@ -39,6 +39,7 @@ const RAW_RUNTIME_STATE =
           ["eslint", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:9.32.0"],\
           ["eslint-plugin-react-hooks", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:5.2.0"],\
           ["eslint-plugin-react-refresh", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:0.4.20"],\
+          ["framer-motion", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:12.23.12"],\
           ["globals", "npm:16.3.0"],\
           ["lucide-react", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:0.534.0"],\
           ["mongoose", "npm:8.17.1"],\
@@ -1472,6 +1473,7 @@ const RAW_RUNTIME_STATE =
           ["eslint", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:9.32.0"],\
           ["eslint-plugin-react-hooks", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:5.2.0"],\
           ["eslint-plugin-react-refresh", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:0.4.20"],\
+          ["framer-motion", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:12.23.12"],\
           ["globals", "npm:16.3.0"],\
           ["lucide-react", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:0.534.0"],\
           ["mongoose", "npm:8.17.1"],\
@@ -2105,6 +2107,39 @@ const RAW_RUNTIME_STATE =
           ["form-data", "npm:4.0.4"],\
           ["hasown", "npm:2.0.2"],\
           ["mime-types", "npm:2.1.35"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["framer-motion", [\
+      ["npm:12.23.12", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/framer-motion-npm-12.23.12-10920233e6-10c0.zip/node_modules/framer-motion/",\
+        "packageDependencies": [\
+          ["framer-motion", "npm:12.23.12"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:12.23.12", {\
+        "packageLocation": "./.yarn/__virtual__/framer-motion-virtual-fca3b36b6a/6/AppData/Local/Yarn/Berry/cache/framer-motion-npm-12.23.12-10920233e6-10c0.zip/node_modules/framer-motion/",\
+        "packageDependencies": [\
+          ["@emotion/is-prop-valid", null],\
+          ["@types/emotion__is-prop-valid", null],\
+          ["@types/react", "npm:19.1.9"],\
+          ["@types/react-dom", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:19.1.7"],\
+          ["framer-motion", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:12.23.12"],\
+          ["motion-dom", "npm:12.23.12"],\
+          ["motion-utils", "npm:12.23.6"],\
+          ["react", "npm:19.1.1"],\
+          ["react-dom", "virtual:67bccc7d0bcfa1230f52b04f252953235f3247e8df364142a4b7724e7369b822323dc3148cf3825512a8c0b70e04e7501cbd67f5ac8193999d7bc7a9f219cccb#npm:19.1.1"],\
+          ["tslib", "npm:2.8.1"]\
+        ],\
+        "packagePeers": [\
+          "@emotion/is-prop-valid",\
+          "@types/emotion__is-prop-valid",\
+          "@types/react-dom",\
+          "@types/react",\
+          "react-dom",\
+          "react"\
         ],\
         "linkType": "HARD"\
       }]\
@@ -2892,6 +2927,25 @@ const RAW_RUNTIME_STATE =
           ["mquery", "npm:5.0.0"],\
           ["ms", "npm:2.1.3"],\
           ["sift", "npm:17.1.3"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["motion-dom", [\
+      ["npm:12.23.12", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/motion-dom-npm-12.23.12-e3649d47fb-10c0.zip/node_modules/motion-dom/",\
+        "packageDependencies": [\
+          ["motion-dom", "npm:12.23.12"],\
+          ["motion-utils", "npm:12.23.6"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["motion-utils", [\
+      ["npm:12.23.6", {\
+        "packageLocation": "../../../../../AppData/Local/Yarn/Berry/cache/motion-utils-npm-12.23.6-c060c881d0-10c0.zip/node_modules/motion-utils/",\
+        "packageDependencies": [\
+          ["motion-utils", "npm:12.23.6"]\
         ],\
         "linkType": "HARD"\
       }]\
