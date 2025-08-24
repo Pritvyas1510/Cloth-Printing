@@ -339,18 +339,28 @@ export const uploadDeliveredImage = async (req, res) => {
     );
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Save image + update status
+    // Save delivered image
     product.deliveredImage = file.path;
 
-    // ✅ Auto change order status to delivered
+    // Update order status to delivered
     order.status = "delivered";
+
+    // ✅ If payment method is COD and status is pending, mark it done
+    if (
+      order.paymentMethod === "Cash on Delivery" &&
+      order.paymentStatus === "pending"
+    ) {
+      order.paymentStatus = "done";
+    }
 
     await order.save();
 
     res.status(200).json({
-      message: "Delivered image uploaded and order marked as delivered",
+      message:
+        "Delivered image uploaded, order marked as delivered, payment updated if COD",
       deliveredImage: file.path,
       orderStatus: order.status,
+      paymentStatus: order.paymentStatus,
     });
   } catch (err) {
     console.error("Upload delivered image error:", err.message);
@@ -502,8 +512,6 @@ export const getCompletedOrders = async (req, res) => {
   }
 };
 
-
-
 // PUT /api/orders/:orderId/cancel
 export const cancelOrder = async (req, res) => {
   try {
@@ -529,9 +537,6 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
-
-
-
 // GET /api/orders/cancelled
 export const getCancelledOrders = async (req, res) => {
   try {
@@ -556,4 +561,3 @@ export const getCancelledOrders = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
