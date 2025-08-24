@@ -11,7 +11,7 @@ const AllProduct = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -38,7 +38,9 @@ const AllProduct = () => {
       setSuggestions([]);
     } else {
       const filtered = allProducts.filter((product) => {
-        const inTitle = product.title.toLowerCase().includes(value.toLowerCase());
+        const inTitle = product.title
+          .toLowerCase()
+          .includes(value.toLowerCase());
         const inColor = product.color?.some((c) =>
           c.toLowerCase().includes(value.toLowerCase())
         );
@@ -122,17 +124,14 @@ const AllProduct = () => {
                   className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ease-in-out"
                 >
                   <img
-                    src={
-                      product.images && product.images.length > 0
-                        ? `${BASE_URL}/${product.images[0]}`
-                        : "https://via.placeholder.com/200"
-                    }
+                    src={product.images[0] || "https://via.placeholder.com/200"}
                     alt={product.title}
                     className="w-full h-56 object-contain bg-gray-50 p-4"
                     onError={(e) =>
                       (e.target.src = "https://via.placeholder.com/200")
                     }
                   />
+
                   <div className="p-5">
                     <h3 className="text-lg font-bold text-gray-800">
                       {product.title}
@@ -147,8 +146,7 @@ const AllProduct = () => {
                     {/* Sizes */}
                     {product.size?.length > 0 && (
                       <p className="text-sm mt-2 text-gray-700">
-                        <strong>Sizes:</strong>{" "}
-                        {product.size.join(", ")}
+                        <strong>Sizes:</strong> {product.size.join(", ")}
                       </p>
                     )}
 

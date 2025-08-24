@@ -147,7 +147,7 @@ const Completed = () => {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-800 tracking-wide">
-                    Order #{order._id.slice(-6)}
+                    Order {order._id.slice(10)}
                   </h2>
                   <p className="text-xs text-gray-500">
                     Placed on:{" "}
