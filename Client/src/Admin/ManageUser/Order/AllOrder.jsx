@@ -39,7 +39,8 @@ const AllOrder = () => {
         (order) =>
           order._id &&
           typeof order._id === "string" &&
-          order.status?.toLowerCase() !== "completed"
+          order.status &&
+          !["completed", "cancelled"].includes(order.status.toLowerCase())
       );
       setOrders(validOrders);
       const productIds = [
