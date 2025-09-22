@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const Complate = () => {
+const Complete = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState({});
@@ -434,4 +434,4 @@ const Complate = () => {
   );
 };
 
-export default Complate;
+export default Complete;

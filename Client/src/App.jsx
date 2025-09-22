@@ -27,10 +27,10 @@ import OrderDesign from "./Admin/ManageUser/Order/OrderDesign";
 import ShippedDetails from "./Admin/ManageUser/Order/ShippedDetails";
 import DesignAdmin from "./Admin/ManageUser/Order/DesignAdmin";
 import ShipppedOrder from "./Admin/ManageUser/Order/ShipppedOrder";
-import Complate from "./Admin/ManageUser/Order/Complate"
 import CancelOrder from "./Admin/ManageUser/Order/CancelOrder";
 import ProtectedRoute from "./Routes/Protected/ProtectedRoute";
-import CompletedOrder from "./pages/ComplatedOrder/Complatedorder";
+import CompletedOrder from "./pages/CompletedOrder/Completedorder";
+import Complete from "./Admin/ManageUser/Order/Complete";
 
 function App() {
   return (
@@ -163,7 +163,7 @@ function App() {
             path="/completed"
             element={
               <ProtectedRoute role="admin">
-                <Complate />
+                <Complete />
               </ProtectedRoute>
             }
           />
