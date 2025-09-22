@@ -35,19 +35,11 @@ const AllOrder = () => {
         },
       });
       const ordersData = Array.isArray(response.data) ? response.data : [];
-      const validOrders = ordersData.filter((order) => {
-        if (!order._id || !order.status) return false;
-        const status = order.status.toLowerCase().trim();
-        return status !== "completed" && status !== "cancel";
-      });
-
-      console.log(
-        "All orders:",
-        ordersData.map((o) => o.status)
-      );
-      console.log(
-        "Filtered orders:",
-        validOrders.map((o) => o.status)
+      const validOrders = ordersData.filter(
+        (order) =>
+          order._id &&
+          typeof order._id === "string" &&
+          !["completed", "cancel"].includes(order.status?.toLowerCase())
       );
 
       setOrders(validOrders);
