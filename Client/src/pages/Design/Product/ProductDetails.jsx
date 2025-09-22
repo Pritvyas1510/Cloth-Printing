@@ -16,7 +16,7 @@ const ProductDetails = () => {
   const [designDescription, setDesignDescription] = useState("");
   const navigate = useNavigate();
 
-  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI;
 
   const colorStyles = {
     Red: "bg-red-500",

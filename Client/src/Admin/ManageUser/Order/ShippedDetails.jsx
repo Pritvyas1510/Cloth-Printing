@@ -13,7 +13,7 @@ const ShippedDetails = ({ orderId, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.VITE_BACKEND_URI;
   const CLOUDINARY_BASE_URL =
     "https://res.cloudinary.com/dopqalob9/image/upload";
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB

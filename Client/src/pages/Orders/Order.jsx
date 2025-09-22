@@ -29,7 +29,7 @@ const Order = () => {
     "https://res.cloudinary.com/dopqalob9/image/upload";
   const RAZORPAY_KEY_ID =
     import.meta.env.VITE_RAZORPAY_KEY || "rzp_test_VQhEfe2NCXbbwI";
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.VITE_BACKEND_URI;
 
   const getImageUrl = (image) => {
     if (!image) return "https://via.placeholder.com/150";

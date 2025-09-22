@@ -21,7 +21,7 @@ app.use(express.json());
 // Enable CORS with credentials
 app.use(
   cors({
-    origin: process.env.ORIGIN || "https://cloth-printingclient.vercel.app/",
+    origin: process.env.ORIGIN,
     credentials: true,
   })
 );

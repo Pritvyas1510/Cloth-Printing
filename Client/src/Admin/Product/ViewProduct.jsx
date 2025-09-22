@@ -36,7 +36,7 @@ const ViewProduct = () => {
     Gold: "bg-yellow-600",
   };
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.VITE_BACKEND_URI;
 
   // Fetch product data
   useEffect(() => {

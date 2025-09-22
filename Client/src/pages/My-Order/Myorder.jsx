@@ -21,7 +21,7 @@ const Myorder = () => {
   const navigate = useNavigate();
   const CLOUDINARY_BASE_URL =
     "https://res.cloudinary.com/dopqalob9/image/upload";
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.VITE_BACKEND_URI;
 
   useEffect(() => {
     if (authLoading) return;

@@ -11,7 +11,7 @@ const AllProduct = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
-  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI;
 
   useEffect(() => {
     if (!isAuthenticated) {

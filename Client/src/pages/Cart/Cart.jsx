@@ -66,7 +66,7 @@ const Cart = () => {
   const updateDialogRef = useRef(null);
   const deleteDialogRef = useRef(null);
 
-  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI;
   const CLOUDINARY_BASE_URL =
     "https://res.cloudinary.com/dopqalob9/image/upload";
 

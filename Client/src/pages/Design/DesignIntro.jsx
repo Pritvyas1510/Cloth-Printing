@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 
 const DesignIntro = ({ products, loading, onSelectProduct }) => {
-  const BASE_URL = import.meta.env.BACKEND_URI || "http://localhost:5000";
+  const BASE_URL = import.meta.env.BACKEND_URI;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
