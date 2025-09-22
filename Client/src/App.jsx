@@ -28,7 +28,7 @@ import ShippedDetails from "./Admin/ManageUser/Order/ShippedDetails";
 import DesignAdmin from "./Admin/ManageUser/Order/DesignAdmin";
 import ShipppedOrder from "./Admin/ManageUser/Order/ShipppedOrder";
 import Complate from "./Admin/ManageUser/Order/Complate";
-import ComplatedOrder from "./pages/ComplatedOrder/Complatedorder";
+import ComplatedOrder from "./pages/ComplatedOrder/ComplatedOrder";
 import CancelOrder from "./Admin/ManageUser/Order/CancelOrder";
 import ProtectedRoute from "./Routes/Protected/ProtectedRoute";
 
