@@ -36,43 +36,35 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Verify authentication with backend
-  useEffect(() => {
-    const verifyAuth = async () => {
-      try {
-        const storedData = JSON.parse(localStorage.getItem("userData"));
-        if (storedData?._id) {
-          setUser(storedData);
-          setIsAuthenticated(true);
-          await fetchProfileImage(storedData._id);
-        }
-        const response = await axios.get("/api/auth/verify", { withCredentials: true });
-        if (response.data.success) {
-          setIsAuthenticated(true);
-          setUser(response.data.user);
-          localStorage.setItem(
-            "userData",
-            JSON.stringify({
-              ...response.data.user,
-              sessionId: response.data.sessionId || null,
-            })
-          );
-          await fetchProfileImage(response.data.user._id);
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-          localStorage.removeItem("userData");
-        }
-      } catch (error) {
-        console.error("Auth verification error:", error.response?.data || error.message);
+useEffect(() => {
+  const verifyAuth = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get("/api/auth/verify", { withCredentials: true });
+      if (response.data.success) {
+        const userData = response.data.user;
+        setIsAuthenticated(true);
+        setUser(userData);
+        localStorage.setItem("userData", JSON.stringify(userData));
+        await fetchProfileImage(userData._id);
+      } else {
         setIsAuthenticated(false);
         setUser(null);
         localStorage.removeItem("userData");
-      } finally {
-        setLoading(false);
       }
-    };
-    verifyAuth();
-  }, []);
+    } catch (error) {
+      console.error("Auth verification error:", error.response?.data || error.message);
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem("userData");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  verifyAuth();
+}, []);
+
 
   // Login function
   const handleLogin = async (credentials, navigate) => {
