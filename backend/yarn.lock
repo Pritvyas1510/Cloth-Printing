@@ -180,7 +180,7 @@ __metadata:
     cookie-parser: "npm:^1.4.7"
     cors: "npm:^2.8.5"
     dotenv: "npm:^17.1.0"
-    express: "npm:^5.1.0"
+    express: "npm:5.1.0"
     jsonwebtoken: "npm:^9.0.2"
     mongoose: "npm:^8.16.2"
     multer: "npm:^2.0.2"
@@ -671,7 +671,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express@npm:^5.1.0":
+"express@npm:5.1.0":
   version: 5.1.0
   resolution: "express@npm:5.1.0"
   dependencies:
