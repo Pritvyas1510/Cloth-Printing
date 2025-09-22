@@ -27,7 +27,12 @@ export const register = async (req, res) => {
     await newUser.save();
 
     const { password: _, ...userWithoutPassword } = newUser.toObject();
-    res.status(201).json({ message: "User registered successfully", user: userWithoutPassword });
+    res
+      .status(201)
+      .json({
+        message: "User registered successfully",
+        user: userWithoutPassword,
+      });
   } catch (err) {
     console.error("Register Error:", err.message);
     res.status(500).json({ message: "Server error during registration" });
@@ -36,7 +41,7 @@ export const register = async (req, res) => {
 
 // ===================== LOGIN =====================
 export const login = async (req, res) => {
-  const { email, password } = req.body;  
+  const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
@@ -47,7 +52,8 @@ export const login = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -58,14 +64,12 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.BACKEND_URI === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: true, // must be true for HTTPS
+      sameSite: "none", // allows cross-site cookies
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
-
-    console.log("cookie",process.env.BACKEND_URI);
-    
+    console.log("cookie", process.env.BACKEND_URI);
 
     const { password: _, ...userWithoutPassword } = user.toObject();
 
