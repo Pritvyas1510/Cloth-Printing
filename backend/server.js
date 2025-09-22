@@ -21,7 +21,7 @@ app.use(express.json());
 // Enable CORS with credentials
 app.use(
   cors({
-    origin: "https://cloth-printingclient.vercel.app",
+    origin: "https://cloth-printing-iota.vercel.app",
     credentials: true,
   })
 );
