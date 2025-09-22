@@ -27,10 +27,10 @@ import OrderDesign from "./Admin/ManageUser/Order/OrderDesign";
 import ShippedDetails from "./Admin/ManageUser/Order/ShippedDetails";
 import DesignAdmin from "./Admin/ManageUser/Order/DesignAdmin";
 import ShipppedOrder from "./Admin/ManageUser/Order/ShipppedOrder";
-import Complate from "./Admin/ManageUser/Order/Complate";
-import ComplatedOrder from "./pages/ComplatedOrder/ComplatedOrder";
+import Complate from "./Admin/ManageUser/Order/Complate"
 import CancelOrder from "./Admin/ManageUser/Order/CancelOrder";
 import ProtectedRoute from "./Routes/Protected/ProtectedRoute";
+import CompletedOrder from "./pages/ComplatedOrder/Complatedorder";
 
 function App() {
   return (
@@ -60,7 +60,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/order/:id" element={<Order />} />
           <Route path="/myorder" element={<Myorder />} />
-          <Route path="/complatedorder" element={<ComplatedOrder />} />
+          <Route path="/complatedorder" element={<CompletedOrder/>} />
           {/* Admin Routes */}
 
           <Route
