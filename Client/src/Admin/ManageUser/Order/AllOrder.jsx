@@ -43,7 +43,6 @@ const AllOrder = () => {
       );
 
       setOrders(validOrders);
-
       const productIds = [
         ...new Set(
           validOrders.flatMap((order) =>
