@@ -34,7 +34,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="my-17 flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-5xl flex overflow-hidden rounded-3xl shadow-2xl bg-white">
         <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 p-10">
           <div className="text-white text-center space-y-3">

@@ -29,7 +29,7 @@ const Order = () => {
     "https://res.cloudinary.com/dopqalob9/image/upload";
   const RAZORPAY_KEY_ID =
     import.meta.env.VITE_RAZORPAY_KEY || "rzp_test_VQhEfe2NCXbbwI";
-  const BASE_URL = import.meta.env.VITE_BACKEND_URI;
+  const BASE_URL = import.meta.env.VITE_BACKEND_URI || "http://localhost:5000";
 
   const getImageUrl = (image) => {
     if (!image) return "https://via.placeholder.com/150";
@@ -236,265 +236,268 @@ const Order = () => {
     }
   };
 
-const handleSubmitOrder = async (e) => {
-  e.preventDefault();
+  const handleSubmitOrder = async (e) => {
+    e.preventDefault();
 
-  console.log("Submitting order with paymentMethod:", paymentMethod);
+    console.log("Submitting order with paymentMethod:", paymentMethod);
 
-  if (!orderData || !id) {
-    toast.error("Order data or ID is missing.", { position: "top-left" });
-    return;
-  }
-
-  if (!orderData.items?.length) {
-    toast.error("No items in the order.", { position: "top-left" });
-    return;
-  }
-
-  if (
-    !address.street ||
-    !address.city ||
-    !address.state ||
-    !address.postalCode ||
-    !address.country
-  ) {
-    toast.error("Please fill all address fields.", { position: "top-left" });
-    return;
-  }
-
-  const sessionId = localStorage.getItem("sessionId");
-  if (!sessionId) {
-    toast.error("Session ID is missing. Please log in again.", {
-      position: "top-left",
-    });
-    navigate("/login");
-    return;
-  }
-
-  const invalidProduct = orderData.items.find((item) => {
-    const productId = item.productId?._id || item.productId || item.product;
-    return (
-      !productId ||
-      !mongoose.Types.ObjectId.isValid(productId) ||
-      !Number.isFinite(Number(item.price)) ||
-      !Number.isFinite(Number(item.quantity))
-    );
-  });
-  if (invalidProduct) {
-    console.error("Invalid product:", invalidProduct);
-    toast.error(
-      "Invalid product data. Ensure all items have a valid product ID, price, and quantity.",
-      { position: "top-left" }
-    );
-    return;
-  }
-
-  try {
-    const cartCheck = await axios.get("/api/cart/get", {
-      headers: { "x-session-id": sessionId },
-      withCredentials: true,
-    });
-    if (!cartCheck.data?.items?.length) {
-      toast.error("Cart is empty. Add items to proceed.", {
-        position: "top-left",
-      });
-      navigate("/cart");
+    if (!orderData || !id) {
+      toast.error("Order data or ID is missing.", { position: "top-left" });
       return;
     }
-  } catch (error) {
-    console.error("Cart check error:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
+
+    if (!orderData.items?.length) {
+      toast.error("No items in the order.", { position: "top-left" });
+      return;
+    }
+
+    if (
+      !address.street ||
+      !address.city ||
+      !address.state ||
+      !address.postalCode ||
+      !address.country
+    ) {
+      toast.error("Please fill all address fields.", { position: "top-left" });
+      return;
+    }
+
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
+      toast.error("Session ID is missing. Please log in again.", {
+        position: "top-left",
+      });
+      navigate("/login");
+      return;
+    }
+
+    const invalidProduct = orderData.items.find((item) => {
+      const productId = item.productId?._id || item.productId || item.product;
+      return (
+        !productId ||
+        !mongoose.Types.ObjectId.isValid(productId) ||
+        !Number.isFinite(Number(item.price)) ||
+        !Number.isFinite(Number(item.quantity))
+      );
     });
-    toast.error("Failed to verify cart. Please try again.", {
-      position: "top-left",
-    });
-    return;
-  }
+    if (invalidProduct) {
+      console.error("Invalid product:", invalidProduct);
+      toast.error(
+        "Invalid product data. Ensure all items have a valid product ID, price, and quantity.",
+        { position: "top-left" }
+      );
+      return;
+    }
 
-  const orderDetails = {
-    cartId: id,
-    products: orderData.items.map((item) => ({
-      productId: item.productId?._id || item.productId || item.product,
-      title:
-        products[item.productId?._id || item.productId || item.product]?.title ||
-        item.title ||
-        "Untitled",
-      color: item.color || "Not specified",
-      size: item.size || "Not specified",
-      quantity: Number(item.quantity) || 1,
-      price: Number(item.price) || 0,
-      designDescription: item.designDescription,
-      customDesign: item.customDesign,
-    })),
-    totalAmount: orderData.items.reduce(
-      (sum, item) =>
-        sum + Number(item.price || 0) * Number(item.quantity || 1),
-      0
-    ),
-    address,
-    paymentMethod,
-  };
-
-  if (
-    !orderDetails.products.every((item) =>
-      mongoose.Types.ObjectId.isValid(item.productId)
-    )
-  ) {
-    console.error("Invalid productId in orderDetails:", orderDetails.products);
-    toast.error("Invalid product data.", { position: "top-left" });
-    return;
-  }
-  if (
-    !Number.isFinite(orderDetails.totalAmount) ||
-    orderDetails.totalAmount <= 0
-  ) {
-    console.error("Invalid totalAmount:", orderDetails.totalAmount);
-    toast.error("Invalid order amount.", { position: "top-left" });
-    return;
-  }
-  const addr = orderDetails.address;
-  if (
-    !addr.street ||
-    !addr.city ||
-    !addr.state ||
-    !addr.postalCode ||
-    !addr.country
-  ) {
-    console.error("Incomplete address:", orderDetails.address);
-    toast.error("Incomplete address.", { position: "top-left" });
-    return;
-  }
-
-  setPaymentLoading(true);
-
-  try {
-    if (paymentMethod === "Razorpay") {
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        toast.error("Failed to load payment gateway. Please try again.", {
+    try {
+      const cartCheck = await axios.get("/api/cart/get", {
+        headers: { "x-session-id": sessionId },
+        withCredentials: true,
+      });
+      if (!cartCheck.data?.items?.length) {
+        toast.error("Cart is empty. Add items to proceed.", {
           position: "top-left",
         });
-        setPaymentLoading(false);
+        navigate("/cart");
         return;
       }
+    } catch (error) {
+      console.error("Cart check error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      toast.error("Failed to verify cart. Please try again.", {
+        position: "top-left",
+      });
+      return;
+    }
 
-      console.log("Razorpay Key ID:", RAZORPAY_KEY_ID);
-      const response = await axios.post(
-        "/api/payment/create-payment",
-        { amount: orderDetails.totalAmount },
-        { headers: { "x-session-id": sessionId }, withCredentials: true }
+    const orderDetails = {
+      cartId: id,
+      products: orderData.items.map((item) => ({
+        productId: item.productId?._id || item.productId || item.product,
+        title:
+          products[item.productId?._id || item.productId || item.product]
+            ?.title ||
+          item.title ||
+          "Untitled",
+        color: item.color || "Not specified",
+        size: item.size || "Not specified",
+        quantity: Number(item.quantity) || 1,
+        price: Number(item.price) || 0,
+        designDescription: item.designDescription,
+        customDesign: item.customDesign,
+      })),
+      totalAmount: orderData.items.reduce(
+        (sum, item) =>
+          sum + Number(item.price || 0) * Number(item.quantity || 1),
+        0
+      ),
+      address,
+      paymentMethod,
+    };
+
+    if (
+      !orderDetails.products.every((item) =>
+        mongoose.Types.ObjectId.isValid(item.productId)
+      )
+    ) {
+      console.error(
+        "Invalid productId in orderDetails:",
+        orderDetails.products
       );
+      toast.error("Invalid product data.", { position: "top-left" });
+      return;
+    }
+    if (
+      !Number.isFinite(orderDetails.totalAmount) ||
+      orderDetails.totalAmount <= 0
+    ) {
+      console.error("Invalid totalAmount:", orderDetails.totalAmount);
+      toast.error("Invalid order amount.", { position: "top-left" });
+      return;
+    }
+    const addr = orderDetails.address;
+    if (
+      !addr.street ||
+      !addr.city ||
+      !addr.state ||
+      !addr.postalCode ||
+      !addr.country
+    ) {
+      console.error("Incomplete address:", orderDetails.address);
+      toast.error("Incomplete address.", { position: "top-left" });
+      return;
+    }
 
-      const { orderId } = response.data;
+    setPaymentLoading(true);
 
-      const options = {
-        key: RAZORPAY_KEY_ID,
-        amount: orderDetails.totalAmount * 100,
-        currency: "INR",
-        name: "Stitch Design",
-        description: "Order Payment",
-        order_id: orderId,
-        handler: async (response) => {
-          try {
-            console.log("Sending to /api/orders/verify:", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              orderDetails,
-            });
-            const verifyResponse = await axios.post(
-              "/api/orders/verify",
-              {
+    try {
+      if (paymentMethod === "Razorpay") {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          toast.error("Failed to load payment gateway. Please try again.", {
+            position: "top-left",
+          });
+          setPaymentLoading(false);
+          return;
+        }
+
+        console.log("Razorpay Key ID:", RAZORPAY_KEY_ID);
+        const response = await axios.post(
+          "/api/payment/create-payment",
+          { amount: orderDetails.totalAmount },
+          { headers: { "x-session-id": sessionId }, withCredentials: true }
+        );
+
+        const { orderId } = response.data;
+
+        const options = {
+          key: RAZORPAY_KEY_ID,
+          amount: orderDetails.totalAmount * 100,
+          currency: "INR",
+          name: "Stitch Design",
+          description: "Order Payment",
+          order_id: orderId,
+          handler: async (response) => {
+            try {
+              console.log("Sending to /api/orders/verify:", {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 orderDetails,
-              },
-              {
-                headers: { "x-session-id": sessionId },
-                withCredentials: true,
-              }
-            );
-            await clearCart();
-            toast.success("Order placed successfully!", {
-              position: "top-left",
-            });
-            navigate(`/myorder`, {
-              state: { order: verifyResponse.data.order },
-            });
-          } catch (err) {
-            console.error(
-              "Payment verification error:",
-              err.response?.data || err
-            );
-            toast.error(
-              `Payment verification failed: ${
-                err.response?.data?.message || err.message
-              }`,
-              { position: "top-left" }
-            );
-          } finally {
-            setPaymentLoading(false);
-          }
-        },
-        prefill: {
-          name: profile?.name || "",
-          email: profile?.email || "",
-          contact: profile?.mobile || "",
-        },
-        theme: { color: "#2563eb" },
-      };
+              });
+              const verifyResponse = await axios.post(
+                "/api/orders/verify",
+                {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderDetails,
+                },
+                {
+                  headers: { "x-session-id": sessionId },
+                  withCredentials: true,
+                }
+              );
+              await clearCart();
+              toast.success("Order placed successfully!", {
+                position: "top-left",
+              });
+              navigate(`/myorder`, {
+                state: { order: verifyResponse.data.order },
+              });
+            } catch (err) {
+              console.error(
+                "Payment verification error:",
+                err.response?.data || err
+              );
+              toast.error(
+                `Payment verification failed: ${
+                  err.response?.data?.message || err.message
+                }`,
+                { position: "top-left" }
+              );
+            } finally {
+              setPaymentLoading(false);
+            }
+          },
+          prefill: {
+            name: profile?.name || "",
+            email: profile?.email || "",
+            contact: profile?.mobile || "",
+          },
+          theme: { color: "#2563eb" },
+        };
 
-      console.log("Opening Razorpay UI");
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", () => {
-        toast.error("Payment failed. Try again.", { position: "top-left" });
-        setPaymentLoading(false);
-      });
-      rzp.open();
-    } else {
-      console.log("Sending orderDetails to /api/orders/cod:", orderDetails);
-      const codResponse = await axios
-        .post(
-          "/api/orders/cod", // ✅ COD route
-          { orderDetails },   // ✅ Wrap orderDetails
-          { headers: { "x-session-id": sessionId }, withCredentials: true }
-        )
-        .catch((err) => {
-          throw new Error(
-            `COD order creation failed: ${
-              err.response?.data?.message || err.message
-            }`
-          );
+        console.log("Opening Razorpay UI");
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", () => {
+          toast.error("Payment failed. Try again.", { position: "top-left" });
+          setPaymentLoading(false);
         });
+        rzp.open();
+      } else {
+        console.log("Sending orderDetails to /api/orders/cod:", orderDetails);
+        const codResponse = await axios
+          .post(
+            "/api/orders/cod", // ✅ COD route
+            { orderDetails }, // ✅ Wrap orderDetails
+            { headers: { "x-session-id": sessionId }, withCredentials: true }
+          )
+          .catch((err) => {
+            throw new Error(
+              `COD order creation failed: ${
+                err.response?.data?.message || err.message
+              }`
+            );
+          });
 
-      await clearCart();
-      toast.success("COD Order placed successfully!", {
-        position: "top-left",
+        await clearCart();
+        toast.success("COD Order placed successfully!", {
+          position: "top-left",
+        });
+        navigate(`/myorder`, {
+          state: { order: codResponse.data.order },
+        });
+      }
+    } catch (error) {
+      console.error("Order submission error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
       });
-      navigate(`/myorder`, {
-        state: { order: codResponse.data.order },
-      });
+      toast.error(
+        `Order error: ${paymentMethod} - ${
+          error.response?.data?.message || error.message
+        }`,
+        { position: "top-left" }
+      );
+      setPaymentLoading(false);
     }
-  } catch (error) {
-    console.error("Order submission error:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
-    });
-    toast.error(
-      `Order error: ${paymentMethod} - ${
-        error.response?.data?.message || error.message
-      }`,
-      { position: "top-left" }
-    );
-    setPaymentLoading(false);
-  }
-};
-
+  };
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
@@ -512,48 +515,51 @@ const handleSubmitOrder = async (e) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+    <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 bg-gray-100 min-h-screen">
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 text-center">
         Place Your Order
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Order Summary */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:flex-1">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
             Order Summary
           </h3>
           <div className="space-y-4">
             {orderData.items.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-4 border-b border-gray-200 py-4"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b border-gray-200 py-3 sm:py-4"
               >
-                <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-md overflow-hidden">
-                  {products[
-                    item.productId?._id || item.productId || item.product
-                  ]?.images?.[0] ? (
-                    <img
-                      src={getImageUrl(
-                        products[
-                          item.productId?._id || item.productId || item.product
-                        ]?.images?.[0]
-                      )}
-                      alt="Product Image"
-                      className="object-contain h-full max-w-full transition-transform duration-300 hover:scale-110"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/150";
-                      }}
-                    />
-                  ) : (
-                    <div className="text-gray-500 text-sm">No image</div>
-                  )}
+                {/* Product Image */}
+                <div className="w-full sm:w-24 h-24 bg-gray-100 flex items-center justify-center rounded-md overflow-hidden flex-shrink-0">
+                  <img
+                    src={
+                      products[
+                        item.productId?._id || item.productId || item.product
+                      ]?.images?.[0]
+                        ? getImageUrl(
+                            products[
+                              item.productId?._id ||
+                                item.productId ||
+                                item.product
+                            ]?.images?.[0]
+                          )
+                        : "https://via.placeholder.com/150"
+                    }
+                    alt="Product"
+                    className="object-contain h-full w-full"
+                  />
                 </div>
-                <div className="flex-1">
+
+                {/* Product Info */}
+                <div className="flex-1 w-full sm:text-justify lg:text-center md:text-center">
                   <Link
                     to={`/productdetails/${
                       item.productId?._id || item.productId || item.product
-                    }`} 
-                    className="text-lg font-medium text-gray-800 hover:text-blue-600"
+                    }`}
+                    className="text-gray-800 font-medium text-base sm:text-lg hover:text-blue-600 block truncate"
                   >
                     {products[
                       item.productId?._id || item.productId || item.product
@@ -570,17 +576,19 @@ const handleSubmitOrder = async (e) => {
                   <p className="text-sm text-gray-600">
                     Quantity: {item.quantity || 1}
                   </p>
-                  <p className="text-sm font-semibold text-gray-800">
+                  <p className="text-sm font-semibold text-gray-800 mt-1">
                     ₹{(item.price * (item.quantity || 1)).toFixed(2)}
                   </p>
                   {item.designDescription && (
-                    <p className="text-sm text-gray-600 italic">
+                    <p className="text-sm text-gray-500 italic">
                       Note: {item.designDescription}
                     </p>
                   )}
                 </div>
+
+                {/* Custom Design Image */}
                 {item.customDesign && (
-                  <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-md overflow-hidden">
+                  <div className="w-full sm:w-24 h-24 bg-gray-100 flex items-center justify-center rounded-md overflow-hidden flex-shrink-0">
                     <img
                       src={`${CLOUDINARY_BASE_URL}/${item.customDesign}`}
                       alt="Custom Design"
@@ -594,8 +602,9 @@ const handleSubmitOrder = async (e) => {
               </div>
             ))}
           </div>
+
           <div className="mt-4 text-right">
-            <p className="text-lg font-semibold text-gray-800">
+            <p className="text-lg sm:text-xl font-semibold text-gray-800">
               Total: ₹
               {orderData.items
                 .reduce(
@@ -608,14 +617,16 @@ const handleSubmitOrder = async (e) => {
           </div>
         </div>
 
+        {/* Shipping + Payment Form */}
         {orderData?.paymentStatus !== "done" && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:flex-1">
             <form onSubmit={handleSubmitOrder} className="space-y-6">
+              {/* Shipping Address */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
                   Shipping Address
                 </h3>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {["street", "city", "state", "postalCode", "country"].map(
                     (field) => (
                       <div key={field}>
@@ -630,7 +641,7 @@ const handleSubmitOrder = async (e) => {
                           }
                           value={address[field]}
                           onChange={handleAddressChange}
-                          className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                          className="w-full border border-gray-300 px-3 py-2 sm:px-4 sm:py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                         />
                       </div>
                     )
@@ -638,39 +649,28 @@ const handleSubmitOrder = async (e) => {
                 </div>
               </div>
 
+              {/* Payment Method */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
                   Payment Method
                 </h3>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-gray-700">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="Razorpay"
-                      checked={paymentMethod === "Razorpay"}
-                      onChange={() => {
-                        console.log("Selected Razorpay"); // ADDED: Debug payment method selection
-                        setPaymentMethod("Razorpay");
-                      }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                    />
-                    Razorpay
-                  </label>
-                  <label className="flex items-center gap-2 text-gray-700">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="Cash on Delivery"
-                      checked={paymentMethod === "Cash on Delivery"}
-                      onChange={() => {
-                        console.log("Selected Cash on Delivery"); // ADDED: Debug payment method selection
-                        setPaymentMethod("Cash on Delivery");
-                      }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                    />
-                    Cash on Delivery
-                  </label>
+                  {["Razorpay", "Cash on Delivery"].map((method) => (
+                    <label
+                      key={method}
+                      className="flex items-center gap-2 text-gray-700"
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method}
+                        checked={paymentMethod === method}
+                        onChange={() => setPaymentMethod(method)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                      />
+                      {method}
+                    </label>
+                  ))}
                 </div>
               </div>
 

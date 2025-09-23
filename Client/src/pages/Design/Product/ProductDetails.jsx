@@ -68,8 +68,38 @@ const ProductDetails = () => {
   }, [product]);
 
   const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value) || 1;
-    setQuantity(Math.max(1, Math.min(10, value)));
+    const value = e.target.value;
+
+    // Allow temporary empty input
+    if (value === "") {
+      setQuantity("");
+      return;
+    }
+
+    const parsedValue = parseInt(value, 10);
+
+    if (!isNaN(parsedValue)) {
+      if (product && product.stock) {
+        if (parsedValue > product.stock) {
+          toast.error(`Only ${product.stock} items in stock`, {
+            position: "top-left",
+          });
+          setQuantity(product.stock);
+        } else if (parsedValue < 1) {
+          setQuantity(1);
+        } else {
+          setQuantity(parsedValue);
+        }
+      } else {
+        setQuantity(Math.max(1, parsedValue));
+      }
+    }
+  };
+
+  const handleQuantityBlur = () => {
+    if (quantity === "" || quantity < 1) {
+      setQuantity(1);
+    }
   };
 
   const handleSizeSelect = (size) => setSelectedSize(size);
@@ -402,8 +432,9 @@ const ProductDetails = () => {
                     type="number"
                     value={quantity}
                     onChange={handleQuantityChange}
+                    onBlur={handleQuantityBlur}
                     min="1"
-                    max="10"
+                    max={product?.stock || 1000}
                     className="w-16 sm:w-20 p-2 sm:p-3 rounded-lg border border-[#cedbe8] bg-gray-50 focus:border-[#0d141c]"
                   />
                 </div>
