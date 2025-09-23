@@ -1,6 +1,19 @@
-import React from 'react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../AuthContext/AuthContext";
 
 const Hero = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleStartDesigning = () => {
+    if (isAuthenticated) {
+      navigate("/Design"); // user logged in -> go to Design page
+    } else {
+      navigate("/login"); // not logged in -> go to Login page
+    }
+  };
+
   return (
     <section>
       <div className="@container">
@@ -9,7 +22,7 @@ const Hero = () => {
             className="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-lg items-center justify-center p-4"
             style={{
               backgroundImage:
-                'linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCP1BHnNm2UAkDwEZJJEk9JjB-64x8C2FHrlG3jGUYoWh6pdvEknGUFYjgtCYDx7aQz7xpfM3gmIaWAYgGlLq3Fr1TwjxsvdGNoYY2WeMmtOk2MwXfDW0vZdyCX6CNBqmoe-ppma0-yXTowLIzFiASTbJDfdanaoE9sUF9kmAB979npa3OnCAiSoGuT_srJ5l55dwjjwr_0PmLeev4al_sKSLwvB5DaNtemG8WEXZYL5d8jDOCVsGfah7dIZvtsTYKcrIaDw-Eikqe9")'
+                'linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCP1BHnNm2UAkDwEZJJEk9JjB-64x8C2FHrlG3jGUYoWh6pdvEknGUFYjgtCYDx7aQz7xpfM3gmIaWAYgGlLq3Fr1TwjxsvdGNoYY2WeMmtOk2MwXfDW0vZdyCX6CNBqmoe-ppma0-yXTowLIzFiASTbJDfdanaoE9sUF9kmAB979npa3OnCAiSoGuT_srJ5l55dwjjwr_0PmLeev4al_sKSLwvB5DaNtemG8WEXZYL5d8jDOCVsGfah7dIZvtsTYKcrIaDw-Eikqe9")',
             }}
           >
             <div className="flex flex-col gap-2 text-center">
@@ -21,8 +34,11 @@ const Hero = () => {
                 variety of vendors for printing and delivery.
               </h2>
             </div>
-            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 @[480px]:h-12 @[480px]:px-5 bg-[#3d98f4] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em] @[480px]:text-base @[480px]:font-bold @[480px]:leading-normal @[480px]:tracking-[0.015em]">
-              <a href='Design'><span className="truncate">Start Designing</span></a>
+            <button
+              onClick={handleStartDesigning}
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 @[480px]:h-12 @[480px]:px-5 bg-[#3d98f4] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em] @[480px]:text-base @[480px]:font-bold @[480px]:leading-normal @[480px]:tracking-[0.015em]"
+            >
+              <span className="truncate">Start Designing</span>
             </button>
           </div>
         </div>
